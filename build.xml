@@ -1,0 +1,172 @@
+<!-- 
+Copyright (C) 2008 J. Ross Nicoll <jrn@jrn.me.uk>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2 as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+-->
+
+<project name="Fox Quant" default="compile" basedir=".">
+
+  <property name="build.dir"
+           value="${basedir}/build" />
+  <property name="jar.dir"
+           value="${basedir}/lib" />
+  <property name="src.dir"
+           value="${basedir}/src" />
+
+  <property name="mysqldb.jar"
+           value="${jar.dir}/mysql-connector-java-5.1.10-bin.jar" />
+
+  <property name="iText.jar"
+           value="${jar.dir}/iText-2.1.7.jar" />
+  <property name="iqfeed"
+           value="C:\Program Files (x86)\DTN\IQFeed\" />
+  <property name="jcommon.jar"
+           value="${jar.dir}/jcommon-1.0.16.jar" />
+  <property name="jfreechart.jar"
+           value="${jar.dir}/jfreechart-1.0.13.jar" />
+  <property name="junit.jar"
+           value="${jar.dir}/junit-4.7.jar" />
+  <property name="poi.jar"
+           value="${jar.dir}/poi-3.5-FINAL-20090928.jar" />
+  <property name="substance-lite.jar"
+           value="${jar.dir}/substance-lite-5.3.jar" />
+  <property name="twsapi.jar"
+           value="${jar.dir}/twsapi-9.62.jar" />
+  <property name="twitter4j.jar"
+           value="${jar.dir}/twitter4j-2.0.10.jar" />
+  <property name="log4j.jar"
+           value="${jar.dir}/log4j-1.2.15.jar" />
+
+  <path id="compile.classpath">
+
+    <pathelement location="${iqfeed}" />
+    <pathelement location="${iText.jar}" />
+    <pathelement location="${jcommon.jar}" />
+    <pathelement location="${jfreechart.jar}" />
+    <pathelement location="${junit.jar}" />
+    <pathelement location="${poi.jar}" />
+    <pathelement location="${substance-lite.jar}" />
+    <pathelement location="${twsapi.jar}" />
+    <pathelement location="${twitter4j.jar}" />
+    <pathelement location="${log4j.jar}" />
+
+  </path>
+  <path id="run.classpath">
+
+    <pathelement location="${iqfeed}" />
+    <pathelement location="${iText.jar}" />
+    <pathelement location="${jcommon.jar}" />
+    <pathelement location="${jfreechart.jar}" />
+    <pathelement location="${junit.jar}" />
+    <pathelement location="${mysqldb.jar}" />
+    <pathelement location="${poi.jar}" />
+    <pathelement location="${substance-lite.jar}" />
+    <pathelement location="${twsapi.jar}" />
+    <pathelement location="${twitter4j.jar}" />
+    <pathelement location="${build.dir}" />
+    <pathelement location="${log4j.jar}" />
+
+  </path>
+
+  <target name="compile" depends="prepare"
+   description="Compile Java sources">
+
+    <!-- Compile Java classes as necessary -->
+    <javac srcdir="${src.dir}"
+          destdir="${build.dir}"
+          debug="true"
+          optimize="true">
+        <compilerarg value="-Xlint" compiler="javac1.5" />
+        <compilerarg value="-Xlint:deprecation" compiler="javac1.6" />
+        <compilerarg value="-Xlint:-fallthrough" compiler="javac1.6" />
+        <compilerarg value="-Xlint:-serial" compiler="javac1.6" />
+        <compilerarg value="-Xlint:-unchecked" compiler="javac1.6" />
+        <classpath refid="compile.classpath"/>
+    </javac>
+
+  </target>
+
+  <target name="prepare">
+
+    <!-- Create build directories as needed -->
+    <mkdir  dir="${build.dir}" />
+    <copy  file="etc/log4j.properties" todir="${build.dir}" />
+
+  </target>
+
+  <target name="run" depends="compile">
+    <java classname="org.lostics.foxquant.FoxQuant"
+          classpathref="run.classpath"
+               fork="true" />
+  </target>
+
+  <target name="run-backfill" depends="compile">
+    <java classname="org.lostics.foxquant.BacktestFill"
+          classpathref="run.classpath"
+               fork="true" />
+  </target>
+
+  <target name="run-export" depends="compile">
+    <java classname="org.lostics.foxquant.GenerateExcelReport"
+          classpathref="run.classpath"
+               fork="true" />
+    <java classname="org.lostics.foxquant.GeneratePDFReport"
+          classpathref="run.classpath"
+               fork="true" />
+  </target>
+
+  <target name="backtest" depends="compile">
+    <java classname="org.lostics.foxquant.backtest.RunBacktest"
+          classpathref="run.classpath"
+               fork="true" />
+  </target>
+
+  <target name="test" depends="compile">
+    <junit fork="yes" haltonfailure="yes">
+      <test name="org.lostics.foxquant.indicator.BollingerBandsTest" />
+      <test name="org.lostics.foxquant.indicator.ExponentialMovingAverageTest" />
+      <test name="org.lostics.foxquant.indicator.MACDTest" />
+      <test name="org.lostics.foxquant.indicator.MomentumTest" />
+      <test name="org.lostics.foxquant.indicator.SimpleMovingAverageTest" />
+      <test name="org.lostics.foxquant.indicator.StandardDeviationTest" />
+      <test name="org.lostics.foxquant.indicator.util.DoubleRingBufferTest" />
+      <test name="org.lostics.foxquant.indicator.util.IntegerRingBufferTest" />
+      <test name="org.lostics.foxquant.model.ContractManagerTest" />
+      <test name="org.lostics.foxquant.model.PeriodicDataBufferTest" />
+      <test name="org.lostics.foxquant.model.PeriodicDataTest" />
+      <test name="org.lostics.foxquant.strategy.CatchingDaggersTest" />
+      <test name="org.lostics.foxquant.util.ConcurrentQueueMapTest" />
+      <formatter type="plain" usefile="false" />
+      <classpath refid="run.classpath" />
+    </junit>
+  </target>
+
+  <target name="javadoc" depends="compile"
+   description="Create Javadoc API documentation">
+
+    <mkdir          dir="docs/api"/>
+    <javadoc sourcepath="${src.dir}"
+                destdir="docs/api"
+           packagenames="*"
+            windowtitle="Foxquant API">
+      <classpath refid="compile.classpath"/>
+      <doctitle><![CDATA[<h2>Fox Quant</h2>]]></doctitle>
+      <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+      <link href="http://java.sun.com/products/javamail/javadocs/" />
+    </javadoc>
+
+  </target>
+
+
+</project>

@@ -1,0 +1,25 @@
+FoxQuant's source code is licensed under the GNU General Public License (GPL) version 2, see
+GPL.txt for details.
+
+JCommon and JFreechart are licensed under the terms of the GNU Lesser General
+Public Licence (LGPL). See http://www.jfree.org/jcommon/, http://www.jfree.org/jfreechart/,
+and http://www.gnu.org/licenses/lgpl.html for details.
+
+iText is licensed under the Mozilla Public License (MPL). See http://www.lowagie.com/iText/download.html
+and http://www.lowagie.com/iText/MPL-1.1.txt for details.
+
+Log4J and POI are licensed under the Apache License, Version 2.0. See
+ttp://www.apache.org/licenses/LICENSE-2.0 for details.
+
+MySQL Connector/J is licensed under the terms of the GPL version 2, see the included GPL.txt
+for details.
+
+Twitter4J is licensed under a BSD-style license. It includes software from JSON.org which
+has its own license. See http://yusuke.homeip.net/twitter4j/en/index.html#license for details.
+
+The TWS API license is mostly unspecified (see
+http://interactivebrokers.com/en/p.php?f=programInterface for latest information), but explicitely states:
+
+"As a reminder, the use of the API as a means of disseminating information, including market data or any
+other licensed or copyrighted information, to third parties or non-registered IB customers is strictly
+prohibited without prior written approval of Interactive Brokers."

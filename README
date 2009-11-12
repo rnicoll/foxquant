@@ -1,0 +1,34 @@
+This is intended as example code of a way of implementing a strategy runner against
+Interactive Broker's TWS API.
+
+Right, that out of the way... the directory structure looks like:
+
+LICENSE - License details for the source code and libraries.
+PROBLEMS - Internal notes on problems that need resolving.
+README - This file
+build.xml - is the build file for ant ( http://ant.apache.org/ ).
+etc/ - contains useful files that go with FoxQuant, but are not libraries or source code.
+lib/ contains libraries that FoxQuant uses. The details of those libraries are covered
+later.
+src/ contains the source code to FoxQuant.
+
+In the libraries directory are the jar files for:
+
+iText - http://www.lowagie.com/iText/ - used for PDF report generation.
+JCommon - http://www.jfree.org/jcommon/index.php - used by JFreeChart.
+JFreeChart - http://www.jfree.org/jfreechart/ - used to generate graphs for the PDF report.
+JUnit - http://www.junit.org/ - used for automated unit tests of FoxQuant.
+Log4J - http://logging.apache.org/log4j/ - used for logging.
+MySQL Connector - http://www.mysql.com/products/connector/j/ - provides a connection to the MySQL database.
+POI - http://poi.apache.org/ - used to generate Excel reports.
+Twitter4J - http://yusuke.homeip.net/twitter4j/en/ - used to tracking changes using Twitter
+
+
+The two files probably most interesting to look at are:
+  src/org/lostics/foxquant/ib/ConnectionManager.java
+  src/org/lostics/foxquant/ib/TWSContractManager.java
+
+ConnectionManager.java handles most of the communcation with the TWS API. TWSContractManager.java
+filters incoming prices and order statuses about a single contract (something tradeable) and
+converts them into 5 second or minute bars, and tracks orders in progress.
+

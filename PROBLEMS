@@ -1,0 +1,6 @@
+Need to add handling of failed trades in contract manager.
+Need to load position from database on startup.
+Consider maximum spread limits.
+Need TWS connection recovery.
+Should have a strategy startup message that describes backfill period.
+Need unit tests for market close; currently uses actual time, which is messy.
