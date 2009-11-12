@@ -8,7 +8,6 @@ import com.ib.client.ContractDetails;
 import com.ib.client.Contract;
 import com.ib.client.Order;
 
-import org.lostics.foxquant.ib.HistoricalDataConsumer;
 import org.lostics.foxquant.ib.OrderIDUnavailableException;
 import org.lostics.foxquant.ib.ConnectionManager;
 import org.lostics.foxquant.database.DatabaseUnavailableException;
