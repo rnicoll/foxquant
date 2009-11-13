@@ -1,20 +1,4 @@
-// $Id: MainFrame.java 685 2009-11-08 01:12:26Z  $
-/*
- * Copyright (C) 2008 J. Ross Nicoll <jrn@jrn.me.uk>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+// $Id$
 package org.lostics.foxquant.ui;
 
 import java.awt.event.ActionEvent;
@@ -40,7 +24,6 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -51,6 +34,7 @@ import com.ib.client.Contract;
 
 import org.lostics.foxquant.ib.ContractFactory;
 import org.lostics.foxquant.ib.ConnectionManager;
+import org.lostics.foxquant.iqfeed.IQFeedException;
 import org.lostics.foxquant.model.ContractManager;
 import org.lostics.foxquant.model.ErrorListener;
 import org.lostics.foxquant.model.StrategyFactory;
@@ -74,7 +58,7 @@ public class MainFrame extends JFrame implements WindowListener {
     private final   ContractsPanel contractsPanel;
 
     private         MainFrame(final Configuration setConfiguration)
-        throws DatabaseUnavailableException, SQLException {
+        throws DatabaseUnavailableException, IQFeedException, SQLException {
         super("Forex Quant");
 
         this.configuration = setConfiguration;
@@ -93,7 +77,7 @@ public class MainFrame extends JFrame implements WindowListener {
     }
 
     public static void createAndShowUI(final Configuration setConfiguration)
-        throws DatabaseUnavailableException, SQLException {
+        throws DatabaseUnavailableException, IQFeedException, SQLException {
         final MainFrame frame = new MainFrame(setConfiguration);
         frame.createAndShowUI();
     }

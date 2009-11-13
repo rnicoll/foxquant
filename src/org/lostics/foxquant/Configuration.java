@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import com.ib.client.Contract;
 
 import org.lostics.foxquant.ib.ConnectionManager;
+import org.lostics.foxquant.iqfeed.IQFeedException;
 import org.lostics.foxquant.database.DatabaseUnavailableException;
 
 public class Configuration extends Object {
@@ -72,7 +73,7 @@ public class Configuration extends Object {
      * Constructs and CONNECTS a connection manager.
      */
     public  ConnectionManager getConnectionManager()
-        throws DatabaseUnavailableException, SQLException {
+        throws DatabaseUnavailableException, IQFeedException, SQLException {
         final ConnectionManager connectionManager = new ConnectionManager(this);
 
         return connectionManager;

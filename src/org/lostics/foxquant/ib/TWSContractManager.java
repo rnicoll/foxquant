@@ -46,7 +46,7 @@ import org.lostics.foxquant.TwitterGateway;
  * Manages a single contract; handles separating incoming data into a
  * per-contract thread, tracks position and orders on that contract, etc.
  */
-public class TWSContractManager extends AbstractContractManager implements HistoricalDataConsumer {
+public class TWSContractManager extends AbstractContractManager {
     private enum CMState {
         BACKFILL,
         TRADING,

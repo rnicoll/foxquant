@@ -145,6 +145,11 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
         // Do nothing
     }
 
+    public void handleHistoricError(final Exception e) {
+        System.err.println("Error while retrieving historic prices: "
+            + e);
+    }
+
     public void handleHistoricPrice(final PeriodicData periodicData, final boolean hasGaps) {
         // FIXME: Incoming values are in multiples of minimum tick, need to convert
         // back to actual prices.
