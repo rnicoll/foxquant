@@ -105,6 +105,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
   </target>
 
+  <target name="clean"
+   description="Removes the build directory to force a complete re-compile">
+    <delete dir="${build.dir}"/>
+  </target>
+
   <target name="run" depends="compile">
     <java classname="org.lostics.foxquant.FoxQuant"
           classpathref="run.classpath"

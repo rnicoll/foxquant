@@ -21,6 +21,7 @@ import com.ib.client.Contract;
 import org.lostics.foxquant.database.DatabaseUnavailableException;
 import org.lostics.foxquant.ib.DateRange;
 import org.lostics.foxquant.ib.ConnectionManager;
+import org.lostics.foxquant.iqfeed.IQFeedException;
 import org.lostics.foxquant.model.HistoricalDataConsumer;
 import org.lostics.foxquant.model.HistoricBarSize;
 import org.lostics.foxquant.model.PeriodicData;
@@ -55,7 +56,7 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
     public static void main(final String[] argv)
         throws Configuration.ConfigurationException, DatabaseUnavailableException,
             InterruptedException, InvocationTargetException,
-            IOException, SQLException {
+            IOException, IQFeedException, SQLException {
         final Configuration configuration = FoxQuant.getConfiguration();
         final ConnectionManager connectionManager;
 

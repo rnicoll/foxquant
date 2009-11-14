@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 import org.jvnet.substance.skin.SubstanceRavenGraphiteLookAndFeel;
 
 import org.lostics.foxquant.database.DatabaseUnavailableException;
+import org.lostics.foxquant.iqfeed.IQFeedException;
 import org.lostics.foxquant.ui.MainFrame;
 
 public class FoxQuant extends Object {
@@ -71,6 +72,8 @@ public class FoxQuant extends Object {
                         MainFrame.createAndShowUI(configuration);
                     } catch(DatabaseUnavailableException e) {
                         System.err.println("Unable to connect to database: " + e);
+                    } catch(IQFeedException e) {
+                        System.err.println("Unable to connect to IQFeed: " + e);
                     } catch(SQLException e) {
                         System.err.println("Caught SQLException: " + e);
                     }
