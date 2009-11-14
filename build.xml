@@ -27,10 +27,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   <property name="mysqldb.jar"
            value="${jar.dir}/mysql-connector-java-5.1.10-bin.jar" />
 
+  <property name="iqfeed.jar"
+           value="${jar.dir}/iqfeed-4.6.1.0.jar" />
   <property name="iText.jar"
            value="${jar.dir}/iText-2.1.7.jar" />
-  <property name="iqfeed"
-           value="C:\Program Files (x86)\DTN\IQFeed\" />
   <property name="jcommon.jar"
            value="${jar.dir}/jcommon-1.0.16.jar" />
   <property name="jfreechart.jar"
@@ -50,7 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
   <path id="compile.classpath">
 
-    <pathelement location="${iqfeed}" />
+    <pathelement location="${iqfeed.jar}" />
     <pathelement location="${iText.jar}" />
     <pathelement location="${jcommon.jar}" />
     <pathelement location="${jfreechart.jar}" />
@@ -64,7 +64,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   </path>
   <path id="run.classpath">
 
-    <pathelement location="${iqfeed}" />
+    <pathelement location="${iqfeed.jar}" />
     <pathelement location="${iText.jar}" />
     <pathelement location="${jcommon.jar}" />
     <pathelement location="${jfreechart.jar}" />
