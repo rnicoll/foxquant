@@ -25,8 +25,8 @@ import org.lostics.foxquant.model.TickData;
 import org.lostics.foxquant.Configuration;
 
 public class DatabaseThread extends Thread {
-    public static final int QUEUE_SIZE = 500;
-    public static final int POOL_SIZE = 250;
+    public static final int QUEUE_SIZE = 10000;
+    public static final int POOL_SIZE = 10000;
 
     private static final String PERIODIC_DATA_STATEMENT = "INSERT IGNORE INTO MINUTE_BAR "
         + "(CONTRACT_ID, BAR_TYPE, BAR_START, OPEN, HIGH, LOW, CLOSE) "
@@ -219,7 +219,7 @@ public class DatabaseThread extends Thread {
                     }
                     this.workQueue.drainTo(workList);
                 }
-                
+
                 for (DatabaseWork work: workList) {
                     try {
                         work.write(this);

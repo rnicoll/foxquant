@@ -130,7 +130,7 @@ CREATE TABLE `minute_bar` (
   `LOW` double NOT NULL,
   `CLOSE` double NOT NULL,
   PRIMARY KEY (`CONTRACT_ID`,`BAR_TYPE`,`BAR_START`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -180,7 +180,7 @@ CREATE TABLE `order_status` (
   `RECEIVED_AT` datetime NOT NULL,
   KEY `ORDER_ID` (`ORDER_ID`),
   KEY `STATUS` (`STATUS`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -279,7 +279,7 @@ CREATE TABLE `tick` (
   KEY `RECEIVED_AT` (`RECEIVED_AT`),
   KEY `TICK_CONTRACT` (`CONTRACT_ID`),
   CONSTRAINT `TICK_CONTRACT` FOREIGN KEY (`CONTRACT_ID`) REFERENCES `contract` (`CONTRACT_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
