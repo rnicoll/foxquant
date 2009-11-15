@@ -7,8 +7,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
@@ -23,7 +26,7 @@ import org.lostics.foxquant.Configuration;
 
 public class DatabaseThread extends Thread {
     public static final int QUEUE_SIZE = 500;
-    public static final int POOL_SIZE = 100;
+    public static final int POOL_SIZE = 250;
 
     private static final String PERIODIC_DATA_STATEMENT = "INSERT IGNORE INTO MINUTE_BAR "
         + "(CONTRACT_ID, BAR_TYPE, BAR_START, OPEN, HIGH, LOW, CLOSE) "
@@ -46,18 +49,18 @@ public class DatabaseThread extends Thread {
     
     // All access to workQueue and priceTickPool must be synchronized on
     // notificationObject.
-    private Deque<DatabaseWork> workQueue
-        = new ArrayDeque<DatabaseWork>(QUEUE_SIZE);
-    private Deque<PeriodicDataWork> periodicDataPool
-        = new ArrayDeque<PeriodicDataWork>(POOL_SIZE);
-    private Deque<PriceTick> priceTickPool
-        = new ArrayDeque<PriceTick>(POOL_SIZE);
+    private BlockingQueue<DatabaseWork> workQueue
+        = new ArrayBlockingQueue<DatabaseWork>(QUEUE_SIZE);
+    private Stack<PeriodicDataWork> periodicDataPool
+        = new Stack<PeriodicDataWork>();
+    private Stack<PriceTick> priceTickPool
+        = new Stack<PriceTick>();
 
     public          DatabaseThread(final Configuration setConfiguration)
         throws DatabaseUnavailableException, SQLException {
         for (int queueIdx = 0; queueIdx < POOL_SIZE; queueIdx++) {
-            periodicDataPool.offer(new PeriodicDataWork());
-            priceTickPool.offer(new PriceTick());
+            periodicDataPool.push(new PeriodicDataWork());
+            priceTickPool.push(new PriceTick());
         }
 
         this.configuration = setConfiguration;
@@ -105,7 +108,7 @@ public class DatabaseThread extends Thread {
      * written out. MUST only be called from within the database thread.
      */
     protected void poolPeriodicData(final PeriodicDataWork work) {
-        this.periodicDataPool.offer(work);
+        this.periodicDataPool.push(work);
     }
     
     /**
@@ -113,7 +116,7 @@ public class DatabaseThread extends Thread {
      * written out. MUST only be called from within the database thread.
      */
     protected void poolPriceTick(final PriceTick work) {
-        this.priceTickPool.offer(work);
+        this.priceTickPool.push(work);
     }
 
     public boolean queueContractDetails(final ContractDetails contractDetails) {
@@ -130,19 +133,24 @@ public class DatabaseThread extends Thread {
     public boolean queuePeriodicData(final ContractDetails contractDetails,
         final PeriodicData periodicData) {
         final boolean success;
+        final PeriodicDataWork work;
+
+        try {
+            work = this.periodicDataPool.pop();
+        } catch(java.util.EmptyStackException e) {
+            // We've exhausted the available pool of periodic data objects
+            return false;
+        }
+
+        work.update(contractDetails, periodicData);
 
         synchronized (this.notificationObject) {
-            final PeriodicDataWork work = this.periodicDataPool.poll();
-
-            if (null == work) {
-                // We've exhausted the available pool of periodic data objects
-                return false;
-            }
-
-            work.update(contractDetails, periodicData);
-
             success = this.workQueue.offer(work);
-            this.notificationObject.notify();
+            if (success) {
+                this.notificationObject.notify();
+            } else {
+                this.periodicDataPool.push(work);
+            }
         }
 
         return success;
@@ -151,20 +159,25 @@ public class DatabaseThread extends Thread {
     public boolean queueTick(final ContractManager setContractManager,
         final TickData setTickData) {
         final boolean success;
+        final PriceTick work;
+
+        try {
+            work = this.priceTickPool.pop();
+        } catch(java.util.EmptyStackException e) {
+            // We've exhausted the available pool of price tick objects
+            return false;
+        }
+
+        work.contractManager = setContractManager;
+        work.tickData = setTickData;
 
         synchronized (this.notificationObject) {
-            final PriceTick tick = this.priceTickPool.poll();
-
-            if (null == tick) {
-                // We've exhausted the available pool of price ticks
-                return false;
+            success = this.workQueue.offer(work);
+            if (success) {
+                this.notificationObject.notify();
+            } else {
+                this.priceTickPool.push(work);
             }
-
-            tick.contractManager = setContractManager;
-            tick.tickData = setTickData;
-
-            success = this.workQueue.offer(tick);
-            this.notificationObject.notify();
         }
 
         return success;
@@ -194,29 +207,31 @@ public class DatabaseThread extends Thread {
         
         try {
             while (!this.stop) {
-                DatabaseWork work;
+                final List<DatabaseWork> workList = new ArrayList<DatabaseWork>();
             
                 synchronized (this.notificationObject) {
-                    work = this.workQueue.poll();
-                    while (null == work) {
+                    while (0 == this.workQueue.size()) {
                         this.notificationObject.wait();
 
                         if (this.stop) {
                             return;
                         }
-                        work = this.workQueue.poll();
                     }
+                    this.workQueue.drainTo(workList);
                 }
                 
-                try {
-                    work.write(this);
-                } catch(DatabaseUnavailableException e) {
-                    log.error("Error writing data out to database.", e);
-                } catch(SQLException e) {
-                    log.error("Error writing data out to database.", e);
+                for (DatabaseWork work: workList) {
+                    try {
+                        work.write(this);
+                    } catch(DatabaseUnavailableException e) {
+                        log.error("Error writing data out to database.", e);
+                    } catch(SQLException e) {
+                        log.error("Error writing data out to database.", e);
+                    }
+                    work.dispose(this);
                 }
-                work.dispose(this);
             }
+            
             try {
                 this.periodicDataStatement.close();
                 this.priceStatement.close();
