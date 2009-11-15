@@ -52,15 +52,13 @@ public class DatabaseThread extends Thread {
         this.configuration = setConfiguration;
         this.connection = configuration.getDBConnection();
         this.priceStatement = this.connection.prepareStatement(PRICE_STATEMENT);
+        this.setName("Database");
     }
 
     public void close() {
         this.stop = true;
-        try {
-            this.priceStatement.close();
-            this.connection.close();
-        } catch(SQLException e) {
-            // Don't care
+        synchronized (this.notificationObject) {
+            this.notificationObject.notifyAll();
         }
     }
     
@@ -176,6 +174,12 @@ public class DatabaseThread extends Thread {
                 log.error("Error writing data out to database.", e);
             }
             work.dispose(this);
+        }
+        try {
+            this.priceStatement.close();
+            this.connection.close();
+        } catch(SQLException e) {
+            // Don't care
         }
 
         return;

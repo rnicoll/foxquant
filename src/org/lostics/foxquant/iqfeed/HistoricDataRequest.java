@@ -72,14 +72,18 @@ final class HistoricDataRequest extends Object implements IQFeedWork {
         writer.flush();
         
         String response = reader.readLine();
-        while (response != null) {
-                
-            if (response.equals(IQFeedGateway.MSG_END)) {
+        while (response != null) {            
+            final String parts[] = response.split(",");
+            if (parts[0].equals(IQFeedGateway.MSG_END)) {
+                this.dataConsumer.handleHistoricPriceFinished();
+                return;
+            }
+            if (parts[1].equals(IQFeedGateway.MSG_NO_DATA)) {
+                this.dataConsumer.handleHistoricPriceNoData();
                 this.dataConsumer.handleHistoricPriceFinished();
                 return;
             }
             
-            final String parts[] = response.split(",");
             final Date responseTime;
             final double high = Double.valueOf(parts[1]);
             final double low = Double.valueOf(parts[2]);

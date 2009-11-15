@@ -11,6 +11,7 @@ import com.ib.client.ContractDetails;
 
 import org.apache.log4j.Logger;
 
+import org.lostics.foxquant.model.ContractKey;
 import org.lostics.foxquant.util.ConcurrentQueueMap;
 
 public class ContractFactory extends Object implements ContractDetailsConsumer {

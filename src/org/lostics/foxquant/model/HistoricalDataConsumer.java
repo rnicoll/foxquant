@@ -8,10 +8,17 @@ import org.lostics.foxquant.model.PeriodicData;
  * ConnectionManager to pass data back as it arrives.
  */
 public interface HistoricalDataConsumer {
-    public void handleHistoricError(final Exception e);
+    public void handleHistoricPriceError(final Exception e);
 
     /**
-     * 
+     * Called by the historical data source to indicate that no data matched
+     * the query supplied. This is called instead of handleHistoricPrice().
+     * It is not guaranteed to be called, and primarily exists as an aid
+     * for debugging.
+     */
+    public void handleHistoricPriceNoData();
+
+    /**
      * Called by the historical data source to indicate that a set of
      * historical prices have finished being received.
      */

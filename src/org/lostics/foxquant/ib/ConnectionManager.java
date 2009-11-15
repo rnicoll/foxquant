@@ -47,6 +47,7 @@ import org.lostics.foxquant.database.DatabaseUnavailableException;
 import org.lostics.foxquant.database.DatabaseThread;
 import org.lostics.foxquant.iqfeed.IQFeedException;
 import org.lostics.foxquant.iqfeed.IQFeedGateway;
+import org.lostics.foxquant.model.ContractKey;
 import org.lostics.foxquant.model.ContractManager;
 import org.lostics.foxquant.model.ContractManagerConsumer;
 import org.lostics.foxquant.model.ErrorListener;
@@ -255,7 +256,12 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
 
         if (null != this.smsGateway) {
             try {
-                this.smsGateway.join(3000);
+                this.smsGateway.join(5000);
+                while (this.smsGateway.isAlive()) {
+                    log.error("SMS gateway thread did not quit cleanly, interrupting.");
+                    this.smsGateway.interrupt();
+                    this.smsGateway.join(1000);
+                }
             } catch(InterruptedException e) {
                 log.error("Interrupted while waiting for SMS gateway thread to exit.");
                 return;
@@ -263,17 +269,31 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
         }
 
         try {
-            this.databaseThread.join(5000);
+            this.databaseThread.join(15000);
+            
+            while (this.databaseThread.isAlive()) {
+                log.error("Database thread did not quit cleanly, interrupting.");
+                this.databaseThread.interrupt();
+                this.databaseThread.join(1000);
+            }
         } catch(InterruptedException e) {
             log.error("Interrupted while waiting for database thread to exit.");
             return;
         }
         
-        try {
-            this.iqFeedGateway.join(5000);
-        } catch(InterruptedException e) {
-            log.error("Interrupted while waiting for IQFeed thread to exit.");
-            return;
+        if (null != this.iqFeedGateway) {
+            try {
+                this.iqFeedGateway.join(15000);
+                
+                while (this.iqFeedGateway.isAlive()) {
+                    log.error("IQFeed thread did not quit cleanly, interrupting.");
+                    this.iqFeedGateway.interrupt();
+                    this.iqFeedGateway.join(1000);
+                }
+            } catch(InterruptedException e) {
+                log.error("Interrupted while waiting for IQFeed thread to exit.");
+                return;
+            }
         }
     }
 

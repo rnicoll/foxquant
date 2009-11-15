@@ -12,7 +12,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.ib.client.ContractDetails;
@@ -22,35 +24,44 @@ import org.lostics.foxquant.database.DatabaseUnavailableException;
 import org.lostics.foxquant.ib.DateRange;
 import org.lostics.foxquant.ib.ConnectionManager;
 import org.lostics.foxquant.iqfeed.IQFeedException;
+import org.lostics.foxquant.model.ContractKey;
 import org.lostics.foxquant.model.HistoricalDataConsumer;
 import org.lostics.foxquant.model.HistoricBarSize;
 import org.lostics.foxquant.model.PeriodicData;
 
 public class BacktestFill extends Object implements HistoricalDataConsumer {
-    public  static final String BAR_TYPE_BID      = ConnectionManager.TICKER_TYPE_BID;
     public  static final String BAR_TYPE_MIDPOINT = ConnectionManager.TICKER_TYPE_MIDPOINT;
-    public  static final String BAR_TYPE_ASK    = ConnectionManager.TICKER_TYPE_ASK;
 
     private static final int BACKFILL_MONTHS = 9;
+    
+    // This is also the notification object and synchronization object
+    private static Map<ContractKey, BacktestFill> workList = new HashMap<ContractKey, BacktestFill>();
+    
+    private final ContractKey contractKey;
 
-    // Synchronize access on barInsertStatement
-    private PreparedStatement barInsertStatement;
-
-    private     BacktestFill(final Connection dbConnection)
+    private     BacktestFill(final ContractKey setContractKey)
         throws SQLException {
-        this.barInsertStatement
-            = dbConnection.prepareStatement("INSERT INTO MINUTE_BAR "
-                + "(CONTRACT_ID, BAR_TYPE, BAR_START, OPEN, HIGH, LOW, CLOSE) "
-                + "(SELECT ?, ?, ?, ?, ?, ?, ? "
-                    + "FROM (SELECT 1 FROM DUAL) mutex "
-                    + "LEFT OUTER JOIN MINUTE_BAR bb "
-                    + "ON bb.CONTRACT_ID=? AND bb.BAR_TYPE=? AND bb.BAR_START=? "
-                    + "WHERE bb.CONTRACT_ID IS NULL)");
+        contractKey = setContractKey;
     }
 
-    private void close()
-        throws SQLException {
-        this.barInsertStatement.close();
+    public void handleHistoricPriceFinished() {
+        synchronized (this.workList) {
+            this.workList.remove(this.contractKey);
+            this.workList.notifyAll();
+        }
+    }
+
+    public void handleHistoricPriceError(final Exception e) {
+        System.err.println("Error while retrieving historic prices: "
+            + e);
+    }
+
+    public void handleHistoricPriceNoData() {
+        System.err.println("No data to retrieve while attempting to fetch historic prices.");
+    }
+
+    public void handleHistoricPrice(final PeriodicData periodicData, final boolean hasGaps) {
+        // Written to the database by IQFeed itself
     }
 
     public static void main(final String[] argv)
@@ -69,37 +80,58 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
             final Connection dbConnection = configuration.getDBConnection();
 
             try {
-                final BacktestFill client = new BacktestFill(dbConnection);
-                try {
-                    final List<ContractDetails> contractDetails = getContractDetails(dbConnection);
+                final List<ContractDetails> contractDetails = getContractDetails(dbConnection);
 
-                    connectionManager.connect(dbConnection);
+                connectionManager.connect(dbConnection);
 
-                    for (ContractDetails currentContractDetails: contractDetails) {
-                        final Contract currentContract = currentContractDetails.m_summary;
-                        
-                        client.barInsertStatement.setInt(1, currentContract.m_conId);
-                        client.barInsertStatement.setString(2, BAR_TYPE_MIDPOINT);
-                        client.barInsertStatement.setInt(8, currentContract.m_conId);
-                        client.barInsertStatement.setString(9, BAR_TYPE_MIDPOINT);
-
-                        Date startDate = getLastDataDate(dbConnection, currentContract, BAR_TYPE_MIDPOINT);
-                        final Date endDate = new Date();
-                        System.out.println("Requesting bid "
-                            + currentContract.m_localSymbol + " from "
-                            + startDate + " to "
-                            + endDate);
-                        connectionManager.getIQFeedGateway().requestHistoricalData(client,
-                            currentContractDetails, startDate, endDate, HistoricBarSize.ONE_MINUTE);
+                for (ContractDetails currentContractDetails: contractDetails) {
+                    final Contract currentContract = currentContractDetails.m_summary;
+                    final ContractKey contractKey = new ContractKey(currentContract);
+                    final BacktestFill client = new BacktestFill(contractKey);
+                    Date startDate = getLastDataDate(dbConnection, currentContract, BAR_TYPE_MIDPOINT);
+                    final Date endDate = new Date();
+                    
+                    synchronized (BacktestFill.workList) {
+                        BacktestFill.workList.put(contractKey, client);
                     }
-                } finally {
-                    client.close();
+                    
+                    // FIXME: Need to not request data that's entirely outside
+                    // market opening hours
+                    System.out.println("Requesting bid "
+                        + currentContract.m_localSymbol + " from "
+                        + startDate + " to "
+                        + endDate);
+                    connectionManager.getIQFeedGateway().requestHistoricalData(client,
+                        currentContractDetails, startDate, endDate, HistoricBarSize.ONE_MINUTE);
                 }
             } finally {
                 dbConnection.close();
             }
+            
+            int remaining;
+            
+            synchronized (BacktestFill.workList) {
+                remaining = BacktestFill.workList.keySet().size();
+            }
+            while (remaining > 0) {
+                synchronized (BacktestFill.workList) {
+                    BacktestFill.workList.wait(5000);
+                    remaining = BacktestFill.workList.keySet().size();
+                }
+            }
         } finally {
             connectionManager.close();
+            System.out.println("Connection manager closed.");
+        }
+        
+        final Thread thread = Thread.currentThread();
+        final ThreadGroup threadGroup = thread.getThreadGroup();
+        final Thread[] allThreads = new Thread[threadGroup.activeCount()];
+        final int threadCount = threadGroup.enumerate(allThreads);
+        
+        for (int threadIdx = 0; threadIdx < threadCount; threadIdx++) {
+            System.out.println("Thread: "
+                + allThreads[threadIdx].getName());
         }
 
         return;
@@ -140,33 +172,6 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
         }
 
         return date;
-    }
-
-    public void handleHistoricPriceFinished() {
-        // Do nothing
-    }
-
-    public void handleHistoricError(final Exception e) {
-        System.err.println("Error while retrieving historic prices: "
-            + e);
-    }
-
-    public void handleHistoricPrice(final PeriodicData periodicData, final boolean hasGaps) {
-        // FIXME: Incoming values are in multiples of minimum tick, need to convert
-        // back to actual prices.
-        try {
-            synchronized(this.barInsertStatement) {
-                barInsertStatement.setTimestamp(3, periodicData.startTime);
-                barInsertStatement.setDouble(4, periodicData.open);
-                barInsertStatement.setDouble(5, periodicData.high);
-                barInsertStatement.setDouble(6, periodicData.low);
-                barInsertStatement.setDouble(7, periodicData.close);
-                barInsertStatement.setTimestamp(10, periodicData.startTime);
-                barInsertStatement.executeUpdate();
-            }
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public static List<ContractDetails> getContractDetails(final Connection dbConnection)

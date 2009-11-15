@@ -134,9 +134,13 @@ class BackfillHandler extends Thread implements HistoricalDataConsumer {
         this.contractManager.handleHistoricPrice(periodicData, hasGaps);
     }
 
-    public void handleHistoricError(final Exception e) {
+    public void handleHistoricPriceError(final Exception e) {
         log.error("Historical data source returned error: "
             + e);
+    }
+
+    public void handleHistoricPriceNoData() {
+        log.info("No data while retrieving historic prices.");
     }
 
     public void handleHistoricPriceFinished() {

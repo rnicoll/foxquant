@@ -28,7 +28,8 @@ import org.lostics.foxquant.model.HistoricalDataSource;
 import org.lostics.foxquant.model.PeriodicData;
 
 public class IQFeedGateway extends Thread implements HistoricalDataSource {
-    public static final String MSG_END = "!ENDMSG!,";
+    public static final String MSG_END = "!ENDMSG!";
+    public static final String MSG_NO_DATA = "!NO_DATA!";
 
     public static final int HISTORICAL_DATA_PORT = 9100;
     public static final TimeZone TIMEZONE = TimeZone.getTimeZone("EST");
@@ -45,7 +46,7 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
     private BufferedReader historicalReader;
     private BufferedWriter historicalWriter;
     
-    private final BlockingQueue<IQFeedWork> workQueue = new ArrayBlockingQueue<IQFeedWork>(1000);
+    private final BlockingQueue<IQFeedWork> workQueue = new ArrayBlockingQueue<IQFeedWork>(100);
 
     public          IQFeedGateway(final DatabaseThread setDatabaseThread,
         final String setVersion)
@@ -66,7 +67,6 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
     public void close() {
         this.stop = true;
         this.interrupt();
-        this.iq32.RemoveClientApp();
     }
     
     public DatabaseThread getDatabaseThread() {
@@ -113,18 +113,21 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
                     new OutputStreamWriter(this.historicalSocket.getOutputStream())
                 );
             
-                while (!stop) {
+                while (!this.stop) {
                     runInnerLoop();
                 }
         
                 this.historicalSocket.shutdownOutput();
 				this.historicalSocket.shutdownInput();
             } finally {
-				this.historicalSocket.close();			
+				this.historicalSocket.close();
             }
         } catch(IOException e) {
-            // FIXME: Report the error, attempt to reconnect?
+            // XXX: Attempt to reconnect?
+            log.debug("IOException while communicating with IQFeed:", e);
         }
+        this.iq32.RemoveClientApp();
+        log.debug("Removed client app");
     }
     
     private void runInnerLoop()
@@ -135,7 +138,6 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
             if (null == work) {
                 return;
             }
-            
             work.doWork(this);
         } catch(InterruptedException e) {
             return;

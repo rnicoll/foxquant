@@ -1,17 +1,19 @@
 // $Id: ContractKey.java 685 2009-11-08 01:12:26Z  $
-package org.lostics.foxquant.ib;
+package org.lostics.foxquant.model;
 
 import com.ib.client.Contract;
+
+import org.lostics.foxquant.ib.ConnectionManager;
 
 /**
  * Primary key for contracts that doesn't take into account fields that may
  * change after contract details returns. Used to allow matching of
  * contract consumer to contract.
  */
-class ContractKey extends Object {
+public class ContractKey extends Object {
     private final Contract contract;
 
-    protected   ContractKey(final Contract setContract) {
+    public          ContractKey(final Contract setContract) {
         this.contract = setContract;
 
         if (!setContract.m_secType.equals(ConnectionManager.CONTRACT_SECURITY_TYPE_CASH)) {
