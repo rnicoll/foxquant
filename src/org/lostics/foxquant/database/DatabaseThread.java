@@ -24,6 +24,9 @@ import org.lostics.foxquant.Configuration;
 public class DatabaseThread extends Thread {
     public static final int QUEUE_SIZE = 5000;
 
+    private static final String PERIODIC_DATA_STATEMENT = "INSERT IGNORE INTO MINUTE_BAR "
+        + "(CONTRACT_ID, BAR_TYPE, BAR_START, OPEN, HIGH, LOW, CLOSE) "
+        + "VALUES (?, ?, ?, ?, ?, ?, ?)";
     private static final String PRICE_STATEMENT = "INSERT INTO TICK "
         + "(CONTRACT_ID, RECEIVED_AT, BID_PRICE, ASK_PRICE, BID_SIZE, ASK_SIZE) "
         + "VALUES (?, ?, ?, ?, ?, ?)";
@@ -35,6 +38,7 @@ public class DatabaseThread extends Thread {
 
     private final Configuration configuration;
     private Connection connection;
+    private PreparedStatement periodicDataStatement;
     private PreparedStatement priceStatement;
 
     private boolean stop = false;
@@ -54,7 +58,6 @@ public class DatabaseThread extends Thread {
 
         this.configuration = setConfiguration;
         this.connection = configuration.getDBConnection();
-        this.priceStatement = this.connection.prepareStatement(PRICE_STATEMENT);
         this.setName("Database");
     }
 
@@ -73,6 +76,15 @@ public class DatabaseThread extends Thread {
      */
     protected Connection getConnection() {
         return this.connection;
+    }
+    
+    /**
+     * Returns a prepared statement that can be used for writing out price
+     * ticks. MUST only be called from within the database thread. This
+     * will become invalid if reconnect() is called.
+     */
+    protected PreparedStatement getPeriodicDataStatement() {
+        return this.periodicDataStatement;
     }
     
     /**
@@ -147,9 +159,19 @@ public class DatabaseThread extends Thread {
         }
         this.connection = configuration.getDBConnection();
         this.priceStatement = this.connection.prepareStatement(PRICE_STATEMENT);
+        this.periodicDataStatement = this.connection.prepareStatement(PERIODIC_DATA_STATEMENT);
     }
 
     public void run() {
+        try {
+            this.priceStatement = this.connection.prepareStatement(PRICE_STATEMENT);
+            this.periodicDataStatement = this.connection.prepareStatement(PERIODIC_DATA_STATEMENT);
+        } catch(SQLException e) {
+            log.error("Database thread failed to set up.");
+            // XXX: Need to notify the object that created the thread
+            return;
+        }
+        
         try {
             while (!this.stop) {
                 DatabaseWork work;
@@ -176,6 +198,7 @@ public class DatabaseThread extends Thread {
                 work.dispose(this);
             }
             try {
+                this.periodicDataStatement.close();
                 this.priceStatement.close();
                 this.connection.close();
             } catch(SQLException e) {
