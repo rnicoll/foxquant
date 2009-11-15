@@ -24,15 +24,19 @@ class PeriodicDataWork extends Object implements DatabaseWork {
     private ContractDetails contractDetails;
     private PeriodicData periodicData;
 
-    protected   PeriodicDataWork(final ContractDetails setContractDetails,
-        final PeriodicData setPeriodicData) {
+    protected   PeriodicDataWork() {
         this.log  = Logger.getLogger(this.getClass());
-        this.contractDetails = setContractDetails;
-        this.periodicData = setPeriodicData;
     }
     
     public void dispose(final DatabaseThread databaseThread) {
+        databaseThread.poolPeriodicData(this);
         return;
+    }
+    
+    protected void update(final ContractDetails setContractDetails,
+        final PeriodicData setPeriodicData) {
+        this.contractDetails = setContractDetails;
+        this.periodicData = setPeriodicData;
     }
     
     public void write(final DatabaseThread databaseThread)

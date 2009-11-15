@@ -22,7 +22,8 @@ import org.lostics.foxquant.model.TickData;
 import org.lostics.foxquant.Configuration;
 
 public class DatabaseThread extends Thread {
-    public static final int QUEUE_SIZE = 5000;
+    public static final int QUEUE_SIZE = 500;
+    public static final int POOL_SIZE = 100;
 
     private static final String PERIODIC_DATA_STATEMENT = "INSERT IGNORE INTO MINUTE_BAR "
         + "(CONTRACT_ID, BAR_TYPE, BAR_START, OPEN, HIGH, LOW, CLOSE) "
@@ -47,12 +48,15 @@ public class DatabaseThread extends Thread {
     // notificationObject.
     private Deque<DatabaseWork> workQueue
         = new ArrayDeque<DatabaseWork>(QUEUE_SIZE);
+    private Deque<PeriodicDataWork> periodicDataPool
+        = new ArrayDeque<PeriodicDataWork>(POOL_SIZE);
     private Deque<PriceTick> priceTickPool
-        = new ArrayDeque<PriceTick>(QUEUE_SIZE);
+        = new ArrayDeque<PriceTick>(POOL_SIZE);
 
     public          DatabaseThread(final Configuration setConfiguration)
         throws DatabaseUnavailableException, SQLException {
-        for (int queueIdx = 0; queueIdx < QUEUE_SIZE; queueIdx++) {
+        for (int queueIdx = 0; queueIdx < POOL_SIZE; queueIdx++) {
+            periodicDataPool.offer(new PeriodicDataWork());
             priceTickPool.offer(new PriceTick());
         }
 
@@ -97,11 +101,19 @@ public class DatabaseThread extends Thread {
     }
     
     /**
-     * Re-adds a price tick to the pool of price ticks, after it's been
+     * Re-adds a periodic data work object to the pool, after it's been
      * written out. MUST only be called from within the database thread.
      */
-    protected void poolPriceTick(final PriceTick tick) {
-        this.priceTickPool.offer(tick);
+    protected void poolPeriodicData(final PeriodicDataWork work) {
+        this.periodicDataPool.offer(work);
+    }
+    
+    /**
+     * Re-adds a price tick work object to the pool, after it's been
+     * written out. MUST only be called from within the database thread.
+     */
+    protected void poolPriceTick(final PriceTick work) {
+        this.priceTickPool.offer(work);
     }
 
     public boolean queueContractDetails(final ContractDetails contractDetails) {
@@ -120,8 +132,16 @@ public class DatabaseThread extends Thread {
         final boolean success;
 
         synchronized (this.notificationObject) {
-            success = this.workQueue.offer(new PeriodicDataWork(contractDetails,
-                periodicData));
+            final PeriodicDataWork work = this.periodicDataPool.poll();
+
+            if (null == work) {
+                // We've exhausted the available pool of periodic data objects
+                return false;
+            }
+
+            work.update(contractDetails, periodicData);
+
+            success = this.workQueue.offer(work);
             this.notificationObject.notify();
         }
 
@@ -136,7 +156,7 @@ public class DatabaseThread extends Thread {
             final PriceTick tick = this.priceTickPool.poll();
 
             if (null == tick) {
-                // We've exhausted the available queue space!
+                // We've exhausted the available pool of price ticks
                 return false;
             }
 
