@@ -40,6 +40,8 @@ public class TwitterGateway extends Thread {
         this.userName = setUsername;
         this.password = setPassword;
         this.twitter = new Twitter(this.userName, this.password);
+        
+        this.setName("Twitter");
     }
 
     public void close() {

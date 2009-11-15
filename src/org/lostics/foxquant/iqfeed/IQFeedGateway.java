@@ -127,7 +127,6 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
             log.debug("IOException while communicating with IQFeed:", e);
         }
         this.iq32.RemoveClientApp();
-        log.debug("Removed client app");
     }
     
     private void runInnerLoop()

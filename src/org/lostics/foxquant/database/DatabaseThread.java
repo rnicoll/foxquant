@@ -38,6 +38,9 @@ public class DatabaseThread extends Thread {
     private PreparedStatement priceStatement;
 
     private boolean stop = false;
+    
+    // All access to workQueue and priceTickPool must be synchronized on
+    // notificationObject.
     private Deque<DatabaseWork> workQueue
         = new ArrayDeque<DatabaseWork>(QUEUE_SIZE);
     private Deque<PriceTick> priceTickPool
@@ -146,40 +149,41 @@ public class DatabaseThread extends Thread {
         this.priceStatement = this.connection.prepareStatement(PRICE_STATEMENT);
     }
 
-    //public boolean contractDetails(final ContractDetails contractDetails) {
-    //    return this.contractDetailsQueue.offer(contractDetails);
-    //}
-
     public void run() {
-        while (!this.stop) {
-            DatabaseWork work;
-        
-            synchronized (this.notificationObject) {
-                work = this.workQueue.poll();
-                while (null == work) {
-                    try {
-                        this.notificationObject.wait();
-                    } catch(InterruptedException e) {
-                        log.error("Database thread interrupted.");
-                    }
-                    work = this.workQueue.poll();
-                }
-            }
-
-            try {
-                work.write(this);
-            } catch(DatabaseUnavailableException e) {
-                log.error("Error writing data out to database.", e);
-            } catch(SQLException e) {
-                log.error("Error writing data out to database.", e);
-            }
-            work.dispose(this);
-        }
         try {
-            this.priceStatement.close();
-            this.connection.close();
-        } catch(SQLException e) {
-            // Don't care
+            while (!this.stop) {
+                DatabaseWork work;
+            
+                synchronized (this.notificationObject) {
+                    work = this.workQueue.poll();
+                    while (null == work) {
+                        this.notificationObject.wait();
+
+                        if (this.stop) {
+                            return;
+                        }
+                        work = this.workQueue.poll();
+                    }
+                }
+                
+                try {
+                    work.write(this);
+                } catch(DatabaseUnavailableException e) {
+                    log.error("Error writing data out to database.", e);
+                } catch(SQLException e) {
+                    log.error("Error writing data out to database.", e);
+                }
+                work.dispose(this);
+            }
+            try {
+                this.priceStatement.close();
+                this.connection.close();
+            } catch(SQLException e) {
+                // Don't care
+            }
+        } catch(InterruptedException e) {
+            log.error("Database thread interrupted.");
+            return;
         }
 
         return;

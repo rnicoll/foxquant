@@ -121,17 +121,6 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
             }
         } finally {
             connectionManager.close();
-            System.out.println("Connection manager closed.");
-        }
-        
-        final Thread thread = Thread.currentThread();
-        final ThreadGroup threadGroup = thread.getThreadGroup();
-        final Thread[] allThreads = new Thread[threadGroup.activeCount()];
-        final int threadCount = threadGroup.enumerate(allThreads);
-        
-        for (int threadIdx = 0; threadIdx < threadCount; threadIdx++) {
-            System.out.println("Thread: "
-                + allThreads[threadIdx].getName());
         }
 
         return;

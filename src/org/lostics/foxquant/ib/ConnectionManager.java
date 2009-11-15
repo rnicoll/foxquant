@@ -252,7 +252,12 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
             this.smsGateway.close();
         }
         this.databaseThread.close();
-        this.iqFeedGateway.close();
+        if (null != this.iqFeedGateway) {
+            this.iqFeedGateway.close();
+        }
+        if (null != this.twitterGateway) {
+            this.twitterGateway.close();
+        }
 
         if (null != this.smsGateway) {
             try {
@@ -292,6 +297,21 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
                 }
             } catch(InterruptedException e) {
                 log.error("Interrupted while waiting for IQFeed thread to exit.");
+                return;
+            }
+        }
+        
+        if (null != this.twitterGateway) {
+            try {
+                this.twitterGateway.join(15000);
+                
+                while (this.twitterGateway.isAlive()) {
+                    log.error("Twitter thread did not quit cleanly, interrupting.");
+                    this.twitterGateway.interrupt();
+                    this.twitterGateway.join(1000);
+                }
+            } catch(InterruptedException e) {
+                log.error("Interrupted while waiting for Twitter thread to exit.");
                 return;
             }
         }

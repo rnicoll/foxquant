@@ -58,6 +58,8 @@ public class SMSGateway extends Thread {
 
         this.userName = setUsername;
         this.userPwd = setPassword;
+        
+        this.setName("SMS");
     }
 
     public void close() {
