@@ -1023,7 +1023,9 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
                     + e.toString());
                 e.printStackTrace(System.err);
             }
-            ConnectionManager.this.databaseThread.queuePeriodicData(contractDetails, periodicData);
+            if (!ConnectionManager.this.databaseThread.queuePeriodicData(contractDetails, periodicData)) {
+                log.error("Could not queue periodic data work for database thread.");
+            }
         }
 
         public void managedAccounts( String accountsList) {

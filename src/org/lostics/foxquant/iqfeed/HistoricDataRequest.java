@@ -104,8 +104,9 @@ final class HistoricDataRequest extends Object implements IQFeedWork {
             data = new PeriodicData(new Timestamp(responseTime.getTime()),
                 fixedOpen, fixedHigh, fixedLow, fixedClose);
             this.dataConsumer.handleHistoricPrice(data, false);
-            databaseThread.queuePeriodicData(this.contractDetails,
-                data);
+            if (!databaseThread.queuePeriodicData(this.contractDetails, data)) {
+                log.error("Could not queue periodic data work for database thread.");
+            }
             
             // XXX: Need timeout, connection closing etc. handling
             response = reader.readLine();
