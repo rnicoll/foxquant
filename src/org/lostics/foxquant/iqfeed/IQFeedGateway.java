@@ -96,8 +96,7 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
         final HistoricBarSize barSize)
         throws IllegalArgumentException, InterruptedException {
         final HistoricDataRequest request = new HistoricDataRequest(backfillHandler,
-            // FIXME: Actually use barsize to generate interval seconds
-            contractDetails, startDate, endDate, 60);
+            contractDetails, startDate, endDate, barSize.getBarLengthSeconds());
         this.workQueue.offer(request);
     }
     

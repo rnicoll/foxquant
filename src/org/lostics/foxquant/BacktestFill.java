@@ -89,7 +89,7 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
                             + currentContract.m_localSymbol + " from "
                             + startDate + " to "
                             + endDate);
-                        connectionManager.requestHistoricalData(client,
+                        connectionManager.getIQFeedGateway().requestHistoricalData(client,
                             currentContractDetails, startDate, endDate, HistoricBarSize.ONE_MINUTE);
                     }
                 } finally {
@@ -173,7 +173,7 @@ public class BacktestFill extends Object implements HistoricalDataConsumer {
         throws SQLException {
         final List<ContractDetails> contracts = new ArrayList<ContractDetails>();
         final PreparedStatement statement
-            = dbConnection.prepareStatement("SELECT C.CONTRACT_ID, C.EXPIRY, C.STRIKE, C.CONTRACT_RIGHT, "
+            = dbConnection.prepareStatement("SELECT C.SYMBOL, C.SEC_TYPE, C.EXCHANGE, C.CURRENCY, C.LOCAL_SYMBOL, C.CONTRACT_ID, C.EXPIRY, C.STRIKE, C.CONTRACT_RIGHT, "
                 + "C.MULTIPLIER, C.EXCHANGE, C.PRIMARY_EXCHANGE, C.MARKET_NAME, C.TRADING_CLASS, C.MIN_TICK, C.PRICE_MAGNIFIER, C.NOTES "
             + "FROM CONTRACT C ");
         try {

@@ -18,12 +18,12 @@ public enum HistoricBarSize {
     ONE_WEEK("1 week", 7 * 24 * 60 * 60 * 1000, 52 * 7 * 24 * 60 * 60 * 1000, "52 W");
 
     private String barID;
-    private long barLengthMillis;
+    private int barLengthMillis;
 
-    private long requestLengthMillis;
+    private int requestLengthMillis;
     private String requestLengthSetting;
 
-          HistoricBarSize(final String setBarID, final long setBarLengthMillis, final long setRequestLengthMillis,
+          HistoricBarSize(final String setBarID, final int setBarLengthMillis, final int setRequestLengthMillis,
             final String setRequestLengthSetting) {
         this.barID = setBarID;
         this.barLengthMillis = setBarLengthMillis;
@@ -36,11 +36,15 @@ public enum HistoricBarSize {
         return this.barID;
     }
 
-    public long getBarLengthMillis() {
+    public int getBarLengthMillis() {
         return this.barLengthMillis;
     }
 
-    public long getRequestLengthMillis() {
+    public int getBarLengthSeconds() {
+        return this.barLengthMillis / 1000;
+    }
+
+    public int getRequestLengthMillis() {
         return this.requestLengthMillis;
     }
 
