@@ -43,6 +43,7 @@ public abstract class AbstractContractManager extends Thread implements Contract
     private static final TimeZone MARKET_OPEN_TIMEZONE = TimeZone.getTimeZone("America/New_York");
 
     protected final Contract contract;
+    protected final ContractKey contractKey;
     protected final ContractDetails contractDetails;
 
     protected final Logger log;
@@ -58,6 +59,7 @@ public abstract class AbstractContractManager extends Thread implements Contract
     protected           AbstractContractManager(final ContractDetails setContractDetails) {
         this.contractDetails = setContractDetails;
         this.contract = setContractDetails.m_summary;
+        this.contractKey = new ContractKey(this.contract);
         
         this.log = Logger.getLogger(this.getClass());
         
@@ -99,11 +101,11 @@ public abstract class AbstractContractManager extends Thread implements Contract
         // XXX: It would be better if contract managers could produce contract
         // keys rather than using the full contract
         
-        return this.getContract().equals(contractManagerB.getContract());
+        return this.getContractKey().equals(contractManagerB.getContractKey());
     }
     
     public final int hashCode() {
-        return this.getContract().hashCode();
+        return this.getContractKey().hashCode();
     }
     
     public final String toString() {
@@ -136,6 +138,10 @@ public abstract class AbstractContractManager extends Thread implements Contract
 
     public ContractDetails getContractDetails() {
         return this.contractDetails;
+    }
+
+    public ContractKey getContractKey() {
+        return this.contractKey;
     }
 
     public int getContractID() {

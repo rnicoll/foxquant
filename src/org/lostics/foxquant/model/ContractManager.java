@@ -43,6 +43,8 @@ public interface ContractManager {
     public String formatTicksAsPrice(int ticks);
 
     public Contract getContract();
+
+    public ContractKey getContractKey();
     
     public ContractDetails getContractDetails();
 
