@@ -21,6 +21,7 @@ import org.lostics.foxquant.model.ContractPosition;
 import org.lostics.foxquant.model.EntryOrder;
 import org.lostics.foxquant.model.ExitOrders;
 import org.lostics.foxquant.model.PeriodicData;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyException;
 import org.lostics.foxquant.model.StrategyFactory;
 import org.lostics.foxquant.model.Strategy;
@@ -56,7 +57,8 @@ public class UnitTestContractManager extends AbstractContractManager {
      */
     public          UnitTestContractManager(final ContractDetails setContractDetails,
         final StrategyFactory strategyFactory, final List<PeriodicData> setData,
-        final long setPeriodMillis) {
+        final long setPeriodMillis)
+        throws StrategyAlreadyExistsException {
         super(setContractDetails);
         
         this.periodMillis = setPeriodMillis;
@@ -72,7 +74,8 @@ public class UnitTestContractManager extends AbstractContractManager {
      * Constructs a new contract manager for unit testing. This constructor
      * does not set a strategy, and is therefore unsuitable for trading with.
      */
-    public          UnitTestContractManager(final ContractDetails setContractDetails) {
+    public          UnitTestContractManager(final ContractDetails setContractDetails)
+        throws StrategyAlreadyExistsException {
         this(setContractDetails, null, new ArrayList<PeriodicData>(), 1000);
     }
 

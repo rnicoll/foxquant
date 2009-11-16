@@ -16,13 +16,14 @@ import org.lostics.foxquant.indicator.InsufficientDataException;
 import org.lostics.foxquant.model.EntryOrder;
 import org.lostics.foxquant.model.OrderAction;
 import org.lostics.foxquant.model.PeriodicData;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyException;
 import org.lostics.foxquant.util.TestUtils;
 
 public class CatchingDaggersTest extends Object {
     @Test
     public void testProfitTooSmall()
-        throws InsufficientDataException, StrategyException {
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
         final UnitTestContractManager contractManager;
         final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(3, 0.5);
         final Date now = new Date();
@@ -44,7 +45,7 @@ public class CatchingDaggersTest extends Object {
     
     @Test
     public void testTooFarToTransmit()
-        throws InsufficientDataException, StrategyException {
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
         final UnitTestContractManager contractManager;
         final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(4, 0.5);
         final Date now = new Date();
@@ -76,7 +77,7 @@ public class CatchingDaggersTest extends Object {
     
     @Test
     public void testJustInsideTransmitDistance()
-        throws InsufficientDataException, StrategyException {
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
         final UnitTestContractManager contractManager;
         final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(4, 0.5);
         final Date now = new Date();
@@ -108,7 +109,7 @@ public class CatchingDaggersTest extends Object {
     
     @Test
     public void testThreePeriodFlat()
-        throws InsufficientDataException, StrategyException {
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
         final UnitTestContractManager contractManager;
         final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(3, 0.5);
         final Date now = new Date();
@@ -133,7 +134,7 @@ public class CatchingDaggersTest extends Object {
     
     @Test
     public void testThreePeriodLong()
-        throws InsufficientDataException, StrategyException {
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
         final UnitTestContractManager contractManager;
         final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(3, 0.5);
         final Date now = new Date();
@@ -162,7 +163,7 @@ public class CatchingDaggersTest extends Object {
     
     @Test
     public void testThreePeriodShort()
-        throws InsufficientDataException, StrategyException {
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
         final UnitTestContractManager contractManager;
         final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(3, 0.5);
         final Date now = new Date();

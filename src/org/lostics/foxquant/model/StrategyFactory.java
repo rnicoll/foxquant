@@ -11,5 +11,6 @@ import org.lostics.foxquant.Configuration;
 public interface StrategyFactory {
     public void disposeStrategy(final Strategy strategy);
 
-    public Strategy getStrategy(final Configuration configuration, final ContractManager contractManager);
+    public Strategy getStrategy(final Configuration configuration, final ContractManager contractManager)
+        throws StrategyAlreadyExistsException;
 }

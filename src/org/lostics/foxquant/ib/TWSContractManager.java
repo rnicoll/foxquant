@@ -36,6 +36,7 @@ import org.lostics.foxquant.model.PeriodicDataBuffer;
 import org.lostics.foxquant.model.PeriodicData;
 import org.lostics.foxquant.model.PositionIsFlatException;
 import org.lostics.foxquant.model.PositionNotFlatException;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyFactory;
 import org.lostics.foxquant.model.Strategy;
 import org.lostics.foxquant.model.TickData;
@@ -142,7 +143,7 @@ public class TWSContractManager extends AbstractContractManager {
      */
     protected TWSContractManager(final ConnectionManager setConnectionManager,
         final ContractDetails setContractDetails, final StrategyFactory strategyFactory)
-        throws DatabaseUnavailableException, SQLException {
+        throws DatabaseUnavailableException, SQLException, StrategyAlreadyExistsException {
         super(setContractDetails);
         
         this.connectionManager = setConnectionManager;

@@ -2,9 +2,12 @@
 package org.lostics.foxquant.strategy;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.lostics.foxquant.model.ContractManager;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyFactory;
 import org.lostics.foxquant.model.Strategy;
 import org.lostics.foxquant.Configuration;
@@ -28,6 +31,8 @@ public class CatchingDaggersFactory implements StrategyFactory {
     private int historicalBars = DEFAULT_HISTORICAL_BARS;
     private double spread = DEFAULT_SPREAD;
     
+    private Set<Strategy> runningStrategies = new HashSet<Strategy>();
+    
     public          CatchingDaggersFactory() {
         // Nothing to do
     }
@@ -40,13 +45,26 @@ public class CatchingDaggersFactory implements StrategyFactory {
     }
 
     public void disposeStrategy(final Strategy strategy) {
-        return;
+        synchronized (this.runningStrategies) {
+            this.runningStrategies.remove(strategy);
+        }
+        // XXX: Tell the strategy to clean up?
     }
 
     public Strategy getStrategy(final Configuration configuration,
-        final ContractManager contractManager) {
-        return new CatchingDaggers(configuration, contractManager,
+        final ContractManager contractManager)
+        throws StrategyAlreadyExistsException {
+        final Strategy strategy = new CatchingDaggers(configuration, this, contractManager,
             this.historicalBars, this.spread);
+        
+        synchronized (this.runningStrategies) {
+            if (this.runningStrategies.contains(strategy)) {
+                throw new StrategyAlreadyExistsException(contractManager);
+            }
+            this.runningStrategies.add(strategy);
+        }
+        
+        return strategy;
     }
     
     protected boolean requestLong(final String symbol, final CatchingDaggers requestor) {

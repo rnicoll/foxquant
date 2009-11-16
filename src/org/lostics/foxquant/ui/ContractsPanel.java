@@ -25,6 +25,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -44,6 +45,7 @@ import org.lostics.foxquant.model.ContractManagerConsumer;
 import org.lostics.foxquant.model.ContractManager;
 import org.lostics.foxquant.model.ErrorListener;
 import org.lostics.foxquant.model.PositionNotFlatException;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.strategy.CatchingDaggers;
 import org.lostics.foxquant.Configuration;
 
@@ -134,15 +136,23 @@ public class ContractsPanel extends JPanel {
 
                 this.contractFactory.getForexContractDetails(dbConnection,
                     baseCurrency, purchaseCurrency, this);
-            } catch(SQLException e) {
-                // Modal dialog time?
-                System.err.println("Unable to retrieve contract for currency pair \""
-                    + baseCurrency + "/"
-                    + purchaseCurrency + " due to: "
-                    + e.toString());
+            } catch(SQLException sqlE) {
+                // Convert the exception into something the wrapped runnable can access
+                final Exception e = sqlE;
+                
+                javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        JOptionPane.showMessageDialog(ContractsPanel.this.mainFrame,
+                            "Unable to retrieve contract for currency pair \""
+                                + baseCurrency + "/"
+                                + purchaseCurrency + " due to: "
+                                + e.toString(),
+                            "Database error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
                 return;
             }
-                
         }
 
         public void contractDetailsEnd() {
@@ -159,6 +169,17 @@ public class ContractsPanel extends JPanel {
                     } catch(DatabaseUnavailableException e) {
                         System.err.println("Unable to construct contract manager for "
                             + contract.m_localSymbol + " due to database being unavailable: " + e);
+                        return;
+                    } catch(StrategyAlreadyExistsException e) {
+                        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                JOptionPane.showMessageDialog(ContractsPanel.this.mainFrame,
+                                    "A strategy is already running for currency pair "
+                                        + contract.m_localSymbol + ".",
+                                    "Strategy error",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
                         return;
                     } catch(SQLException e) {
                         System.err.println("Unable to construct contract manager for "

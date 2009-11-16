@@ -56,6 +56,7 @@ import org.lostics.foxquant.model.HistoricalDataConsumer;
 import org.lostics.foxquant.model.HistoricalDataSource;
 import org.lostics.foxquant.model.OrderStatus;
 import org.lostics.foxquant.model.PeriodicData;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyFactory;
 import org.lostics.foxquant.model.TickData;
 import org.lostics.foxquant.util.ConcurrentQueueMap;
@@ -493,7 +494,7 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
      */
     public void getContractManager(final ContractManagerConsumer sendTo,
         final ContractDetails contractDetails, final StrategyFactory strategyFactory)
-        throws DatabaseUnavailableException, SQLException {
+        throws DatabaseUnavailableException, SQLException, StrategyAlreadyExistsException {
         final Contract contract = contractDetails.m_summary;
         Integer mktTickerID = null;
 

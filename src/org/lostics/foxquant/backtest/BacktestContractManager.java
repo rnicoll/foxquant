@@ -26,6 +26,7 @@ import org.lostics.foxquant.model.ContractManager;
 import org.lostics.foxquant.model.ContractPosition;
 import org.lostics.foxquant.model.PeriodicData;
 import org.lostics.foxquant.model.PriceType;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.Strategy;
 import org.lostics.foxquant.report.Roundturn;
 import org.lostics.foxquant.BacktestFill;
@@ -67,7 +68,8 @@ public class BacktestContractManager extends AbstractContractManager implements 
      * @param setContract the contract to backtest on.
      */
     public          BacktestContractManager(final ContractDetails setContractDetails, 
-        final ResultSet prices, final long periodMillis) {
+        final ResultSet prices, final long periodMillis)
+        throws StrategyAlreadyExistsException {
         super(setContractDetails);
         
         this.periodMillis = periodMillis;

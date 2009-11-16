@@ -15,6 +15,11 @@ import org.lostics.foxquant.database.DatabaseUnavailableException;
 /**
  * Manages a single contract; handles separating incoming data into a
  * per-contract thread, tracks position and orders on that contract, etc.
+ *
+ * Contract managers MUST do comparison based solely on the contract they
+ * wrap (so two contract managers applying to the same contract are considered
+ * equal). This is critical so that uniqueness tests to ensure only one
+ * contract manager is running for a single contract, work.
  */
 public interface ContractManager {
     /* 12 hours at 5 seconds intervals. */

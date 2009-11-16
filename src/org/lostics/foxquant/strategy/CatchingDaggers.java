@@ -103,6 +103,8 @@ public class CatchingDaggers implements Strategy {
     private static final Logger log = Logger.getLogger(CatchingDaggers.class);
     private Configuration configuration;
     private ContractManager contractManager;
+    private CatchingDaggersFactory factory;
+    
     private Date marketClose;
 
     /** The number of historical data bars the strategy uses to make decisions. */
@@ -157,19 +159,38 @@ public class CatchingDaggers implements Strategy {
     private TFPanel swingPanel = null;
 
     /**
-     * @param configuration configuration to retrieve database connections
+     * @param setConfiguration configuration to retrieve database connections
      * from. May be null, in which case no logging to database will be done.
+     * @param setFactory the factory that created this strategy. Used to
+     * manage cross-strategy details such as blocking multiple concurrent
+     * entries into the same position on a currency.
      */
-    public CatchingDaggers(final Configuration setConfiguration, final ContractManager setContractManager,
+    protected CatchingDaggers(final Configuration setConfiguration, final CatchingDaggersFactory setFactory,
+        final ContractManager setContractManager,
         final int setHistoricalBars, final double setSpread) {
         this.bidBB = new BollingerBands(setSpread, setHistoricalBars);
         this.askBB = new BollingerBands(setSpread, setHistoricalBars);
         
         this.contractManager = setContractManager;
         this.configuration = setConfiguration;
+        this.factory = setFactory;
         this.totalHistoricalBars = setHistoricalBars;
         
         this.marketClose = setContractManager.getMarketCloseTime(new Date());
+    }
+    
+    public boolean equals(final Object o) {
+        final CatchingDaggers strategyB = (CatchingDaggers)o;
+        return this.contractManager.equals(strategyB.contractManager);
+    }
+    
+    public int hashCode() {
+        return this.contractManager.hashCode();
+    }
+    
+    public String toString() {
+        return "Catching daggers strategy running on "
+            + this.contractManager.toString();
     }
 
     public void backfillMinuteBar(final PeriodicData periodicData)

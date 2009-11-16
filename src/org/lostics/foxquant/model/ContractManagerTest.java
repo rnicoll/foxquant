@@ -13,11 +13,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import org.lostics.foxquant.backtest.UnitTestContractManager;
+import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 
 public class ContractManagerTest extends Object {
     @Test
     public void testMarketCloseDuration()
-        throws ParseException {
+        throws StrategyAlreadyExistsException, ParseException {
         final ContractManager contractManager = new UnitTestContractManager(
             new ContractDetails());
 
@@ -33,7 +34,7 @@ public class ContractManagerTest extends Object {
 
     @Test
     public void testMarketOpenDuration()
-        throws ParseException {
+        throws StrategyAlreadyExistsException, ParseException {
         final ContractManager contractManager = new UnitTestContractManager(
             new ContractDetails());
 
@@ -47,7 +48,7 @@ public class ContractManagerTest extends Object {
 
     @Test
     public void testMarketCloseTime()
-        throws ParseException {
+        throws StrategyAlreadyExistsException, ParseException {
         final ContractManager contractManager = new UnitTestContractManager(
             new ContractDetails());
 
@@ -63,7 +64,7 @@ public class ContractManagerTest extends Object {
 
     @Test
     public void testMarketOpen()
-        throws ParseException {
+        throws StrategyAlreadyExistsException, ParseException {
         final ContractManager contractManager = new UnitTestContractManager(
             new ContractDetails());
 

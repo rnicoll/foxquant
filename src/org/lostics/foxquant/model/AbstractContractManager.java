@@ -92,6 +92,24 @@ public abstract class AbstractContractManager extends Thread implements Contract
         }
         this.priceFormat = new DecimalFormat(formatString.toString());
     }
+    
+    public final boolean equals(final Object o) {
+        final ContractManager contractManagerB = (ContractManager)o;
+        
+        // XXX: It would be better if contract managers could produce contract
+        // keys rather than using the full contract
+        
+        return this.getContract().equals(contractManagerB.getContract());
+    }
+    
+    public final int hashCode() {
+        return this.getContract().hashCode();
+    }
+    
+    public final String toString() {
+        return "ContractManager["
+            + this.getContract() + "]";
+    }
 
     public void addPositionListener(final ContractPositionListener listener) {
         this.positionListeners.add(listener);
