@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
 
 import org.junit.Assert;
@@ -19,8 +20,7 @@ public class ContractManagerTest extends Object {
     @Test
     public void testMarketCloseDuration()
         throws StrategyAlreadyExistsException, ParseException {
-        final ContractManager contractManager = new UnitTestContractManager(
-            new ContractDetails());
+        final ContractManager contractManager = new UnitTestContractManager();
 
         final DateFormat dateFormat = new SimpleDateFormat("HH:mm yyyy-MM-dd zzzzzzzzz");
         final Date dayAfterMarketClose = dateFormat.parse("16:00 2008-06-28 GMT-05:00");
@@ -35,8 +35,7 @@ public class ContractManagerTest extends Object {
     @Test
     public void testMarketOpenDuration()
         throws StrategyAlreadyExistsException, ParseException {
-        final ContractManager contractManager = new UnitTestContractManager(
-            new ContractDetails());
+        final ContractManager contractManager = new UnitTestContractManager();
 
         final DateFormat dateFormat = new SimpleDateFormat("HH:mm yyyy-MM-dd zzzzzzzzz");
         final Date minuteAfterMarketOpen = dateFormat.parse("16:16 2008-06-29 GMT-05:00");
@@ -49,8 +48,7 @@ public class ContractManagerTest extends Object {
     @Test
     public void testMarketCloseTime()
         throws StrategyAlreadyExistsException, ParseException {
-        final ContractManager contractManager = new UnitTestContractManager(
-            new ContractDetails());
+        final ContractManager contractManager = new UnitTestContractManager();
 
         final DateFormat dateFormat = new SimpleDateFormat("HH:mm yyyy-MM-dd zzzzzzzzz");
         final Date minuteAfterMarketOpen = dateFormat.parse("16:16 2008-06-29 GMT-05:00");
@@ -65,8 +63,7 @@ public class ContractManagerTest extends Object {
     @Test
     public void testMarketOpen()
         throws StrategyAlreadyExistsException, ParseException {
-        final ContractManager contractManager = new UnitTestContractManager(
-            new ContractDetails());
+        final ContractManager contractManager = new UnitTestContractManager();
 
         final DateFormat dateFormat = new SimpleDateFormat("HH:mm yyyy-MM-dd zzzzzzzzz");
         final Date justAfterMarketClose = dateFormat.parse("16:01 2008-06-27 GMT-05:00");

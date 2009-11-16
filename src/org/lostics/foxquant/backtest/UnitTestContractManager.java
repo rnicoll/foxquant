@@ -71,6 +71,24 @@ public class UnitTestContractManager extends AbstractContractManager {
     }
 
     /**
+     * Constructs a new list data source.
+     *
+     * @param setData the periodic data to be produced when run() is called.
+     * Copies the given data into the data source's internal buffer, rather
+     * keeping the original list.
+     * @param strategyFactory the strategy factory to generate a strategy from.
+     * If null, no strategy is set up (useful if this contract manager isn't going
+     * to be used for trading).
+     * @param setPeriodMillis the minimum time interval between entries in
+     * setData.
+     */
+    public          UnitTestContractManager(final StrategyFactory strategyFactory, final List<PeriodicData> setData,
+        final long setPeriodMillis)
+        throws StrategyAlreadyExistsException {
+        this(generateTestContractDetails(), strategyFactory, setData, setPeriodMillis);
+    }
+
+    /**
      * Constructs a new contract manager for unit testing. This constructor
      * does not set a strategy, and is therefore unsuitable for trading with.
      */
@@ -79,7 +97,30 @@ public class UnitTestContractManager extends AbstractContractManager {
         this(setContractDetails, null, new ArrayList<PeriodicData>(), 1000);
     }
 
+    /**
+     * Constructs a new contract manager for unit testing. This constructor
+     * does not set a strategy, and is therefore unsuitable for trading with.
+     */
+    public          UnitTestContractManager()
+        throws StrategyAlreadyExistsException {
+        this(generateTestContractDetails());
+    }
+
     public void close() {
+    }
+    
+    public static ContractDetails generateTestContractDetails() {
+        final ContractDetails contractDetails = new ContractDetails();
+        final Contract contract = new Contract();
+        
+        contractDetails.m_minTick = 0.0005;
+        contractDetails.m_summary = contract;
+        contract.m_secType = "CASH";
+        contract.m_symbol = "GBP";
+        contract.m_currency = "USD";
+        contract.m_localSymbol = "GBP.USD";
+        
+        return contractDetails;
     }
 
     public long getBarPeriod() {
