@@ -8,9 +8,9 @@ import org.lostics.foxquant.Configuration;
  * object to be passed to contract managers during set up, and to give strategies
  * a single shared object to handle any shared work.
  */
-public interface StrategyFactory {
-    public void disposeStrategy(final Strategy strategy);
+public interface StrategyFactory<T extends Strategy> {
+    public void disposeStrategy(final T strategy);
 
-    public Strategy getStrategy(final Configuration configuration, final ContractManager contractManager)
+    public T getStrategy(final Configuration configuration, final ContractManager contractManager)
         throws StrategyAlreadyExistsException;
 }

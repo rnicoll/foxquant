@@ -15,11 +15,7 @@ import org.lostics.foxquant.model.StrategyFactory;
 import org.lostics.foxquant.model.Strategy;
 import org.lostics.foxquant.Configuration;
 
-/**
- * BB band bounceback strategy with entry confirmation from long term
- * SMA. Works well with 3 minute bars on currencies.
- */
-public class CatchingDaggersFactory implements StrategyFactory {
+public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> {
     /** The minimum number of bars required before the strategy starts
      * working.
      */
@@ -34,7 +30,7 @@ public class CatchingDaggersFactory implements StrategyFactory {
     private int historicalBars = DEFAULT_HISTORICAL_BARS;
     private double spread = DEFAULT_SPREAD;
     
-    private Set<Strategy> runningStrategies = new HashSet<Strategy>();
+    private Set<CatchingDaggers> runningStrategies = new HashSet<CatchingDaggers>();
     
     public          CatchingDaggersFactory() {
         // Nothing to do
@@ -47,17 +43,17 @@ public class CatchingDaggersFactory implements StrategyFactory {
         this.spread = setSpread;
     }
 
-    public void disposeStrategy(final Strategy strategy) {
+    public void disposeStrategy(final CatchingDaggers strategy) {
         synchronized (this.runningStrategies) {
             this.runningStrategies.remove(strategy);
         }
         // XXX: Tell the strategy to clean up?
     }
 
-    public Strategy getStrategy(final Configuration configuration,
+    public CatchingDaggers getStrategy(final Configuration configuration,
         final ContractManager contractManager)
         throws StrategyAlreadyExistsException {
-        final Strategy strategy = new CatchingDaggers(configuration, this, contractManager,
+        final CatchingDaggers strategy = new CatchingDaggers(configuration, this, contractManager,
             this.historicalBars, this.spread);
         
         synchronized (this.runningStrategies) {
