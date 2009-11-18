@@ -23,9 +23,9 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
     
     public static final double DEFAULT_SPREAD = 2;
     
-    // Synchronize access to these maps, on themselves.
-    private final Map<String, LinkedHashSet<CatchingDaggers>> longStrategies = new HashMap<String, LinkedHashSet<CatchingDaggers>>();
-    private final Map<String, LinkedHashSet<CatchingDaggers>> shortStrategies = new HashMap<String, LinkedHashSet<CatchingDaggers>>();
+    // Synchronize access to 'tradingRequests' on itself
+    private final Map<String, TradingRequestQueue<CatchingDaggers>> tradingRequests
+        = new HashMap<String, TradingRequestQueue<CatchingDaggers>>();
     
     private int historicalBars = DEFAULT_HISTORICAL_BARS;
     private double spread = DEFAULT_SPREAD;
@@ -66,57 +66,14 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
         return strategy;
     }
     
-    /**
-     * Class private method for removing a strategy from a request queue (list),
-     * and retrieving the strategy at the front of the queue ONLY if it changes.
-     * MUST be called fron within a synchronized block on the map being
-     * affected.
-     *
-     * @return a strategy to notify it has perimission to go long/short. Will be
-     * null if EITHER no strategies are waiting for permission OR if the strategy
-     * at the front of the queue has not changed.
-     */
-    private CatchingDaggers cancelRequestAndGetFirst(final LinkedHashSet<CatchingDaggers> strategies, final CatchingDaggers requestor)
-        throws StrategyException {
-        final Iterator<CatchingDaggers> iterator;
-        final Strategy originalNextStrategy;
-        final Strategy originalTopStrategy;
-        
-        if (null == strategies) {
-            throw new StrategyException("Cancellation of request to go long, while no strategies have outstanding requests.");
-        }
-        
-        if (strategies.size() == 0) {
-            // Assume a concurrency issue, and ignore.
-            return null;
-        }
-        
-        iterator = strategies.iterator();
-        originalTopStrategy = iterator.next();
-        originalNextStrategy = iterator.next();
-        
-        if (!strategies.remove(requestor)) {
-            // Assume a concurrency issue, and ignore.
-            return null;
-        }
-        if (originalTopStrategy.equals(requestor) &&
-            strategies.size() > 0) {
-            // We've just remove the strategy with the highest priority,
-            // check for another to notify of this change.
-            return (CatchingDaggers)originalNextStrategy;
-        }
-        
-        return null;
-    }
-    
     protected void cancelRequestLong(final String symbol, final CatchingDaggers requestor)
         throws StrategyException {
         CatchingDaggers topStrategy = null;
         
-        synchronized (this.longStrategies) {
-            final LinkedHashSet<CatchingDaggers> strategies = this.longStrategies.get(symbol);
+        synchronized (this.tradingRequests) {
+            TradingRequestQueue<CatchingDaggers> requests = this.tradingRequests.get(symbol);
             
-            topStrategy = cancelRequestAndGetFirst(strategies, requestor);
+            // requests.removeLongRequest();
         }
         
         if (null != topStrategy) {
@@ -128,10 +85,10 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
         throws StrategyException {
         CatchingDaggers topStrategy = null;
         
-        synchronized (this.shortStrategies) {
-            final LinkedHashSet<CatchingDaggers> strategies = this.shortStrategies.get(symbol);
+        synchronized (this.tradingRequests) {
+            TradingRequestQueue<CatchingDaggers> requests = this.tradingRequests.get(symbol);
             
-            topStrategy = cancelRequestAndGetFirst(strategies, requestor);
+            // requests.removeShortRequest();
         }
         
         if (null != topStrategy) {
@@ -148,23 +105,20 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
      * call notifyLongRequestApproved() on the strategy once a slot is available,
      * unless cancelRequestLong() is called on the factory first.
      */
-    protected boolean requestLong(final String symbol, final CatchingDaggers requestor)
+    protected void requestLong(final String symbol, final CatchingDaggers requestor)
         throws StrategyException {
-        synchronized (this.longStrategies) {
-            LinkedHashSet<CatchingDaggers> strategies = this.longStrategies.get(symbol);
+        synchronized (this.tradingRequests) {
+            TradingRequestQueue<CatchingDaggers> requests = this.tradingRequests.get(symbol);
             
-            if (null == strategies) {
-                strategies = new LinkedHashSet<CatchingDaggers>();
-                this.longStrategies.put(symbol, strategies);
+            if (null == requests) {
+                requests = new TradingRequestQueue<CatchingDaggers>();
+                this.tradingRequests.put(symbol, requests);
             }
             
-            strategies.add(requestor);
-            if (strategies.size() == 1) {
-                return true;
-            }
+            requests.addLongRequest(new TradingRequest(requestor, symbol, ""));
         }
         
-        return false;
+        return;
     }
     
     /**
@@ -175,22 +129,19 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
      * call notifyShortRequestApproved() on the strategy once a slot is available,
      * unless cancelRequestShort() is called on the factory first.
      */
-    protected boolean requestShort(final String symbol, final CatchingDaggers requestor)
+    protected void requestShort(final String symbol, final CatchingDaggers requestor)
         throws StrategyException {
-        synchronized (this.shortStrategies) {
-            LinkedHashSet<CatchingDaggers> strategies = this.shortStrategies.get(symbol);
+        synchronized (this.tradingRequests) {
+            TradingRequestQueue<CatchingDaggers> requests = this.tradingRequests.get(symbol);
             
-            if (null == strategies) {
-                strategies = new LinkedHashSet<CatchingDaggers>();
-                this.shortStrategies.put(symbol, strategies);
+            if (null == requests) {
+                requests = new TradingRequestQueue<CatchingDaggers>();
+                this.tradingRequests.put(symbol, requests);
             }
             
-            strategies.add(requestor);
-            if (strategies.size() == 1) {
-                return true;
-            }
+            requests.addShortRequest(new TradingRequest(requestor, "", symbol));
         }
         
-        return false;
+        return;
     }
 }
