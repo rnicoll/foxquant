@@ -7,14 +7,14 @@ import org.lostics.foxquant.model.Strategy;
  * Class for tracking strategies requests' for trading permission.
  */
 public class TradingRequest<T extends Strategy> extends Object {
-    public final String longCurrency;
-    public final String shortCurrency;
+    public final String longSymbol;
+    public final String shortSymbol;
     public final T strategy;
     
     public          TradingRequest(final T setStrategy,
-        final String setLongCurrency, final String setShortCurrency) {
+        final String setLongSymbol, final String setShortSymbol) {
         this.strategy = setStrategy;
-        this.longCurrency = setLongCurrency;
-        this.shortCurrency = setShortCurrency;
+        this.longSymbol = setLongSymbol;
+        this.shortSymbol = setShortSymbol;
     }
 }

@@ -41,4 +41,36 @@ class TradingRequestQueue<T extends Strategy> extends Object {
     void addShortRequest(final TradingRequest request) {
         this.queueShort.add(request);
     }
+    
+    TradingRequest getLongTop() {
+        return this.topLong;
+    }
+    
+    TradingRequest getShortTop() {
+        return this.topShort;
+    }
+    
+    void removeLongRequest(final TradingRequest request) {
+        this.queueLong.remove(request);
+    }
+    
+    void removeShortRequest(final TradingRequest request) {
+        this.queueShort.remove(request);
+    }
+    
+    void setLongTop(final TradingRequest setRequest) {
+        if (null != this.topLong) {
+            throw new IllegalStateException("Attempt to set top long request while another request is already at the top.");
+        }
+        
+        this.topLong = setRequest;
+    }
+    
+    void setShortTop(final TradingRequest setRequest) {
+        if (null != this.topShort) {
+            throw new IllegalStateException("Attempt to set top short request while another request is already at the top.");
+        }
+        
+        this.topShort = setRequest;
+    }
 }
