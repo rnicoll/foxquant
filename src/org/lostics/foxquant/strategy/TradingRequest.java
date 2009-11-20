@@ -17,4 +17,24 @@ public class TradingRequest<T extends Strategy> extends Object {
         this.longSymbol = setLongSymbol;
         this.shortSymbol = setShortSymbol;
     }
+    
+    public boolean equals(final Object o) {
+        final TradingRequest<T> requestB = (TradingRequest<T>)o;
+        
+        return requestB.longSymbol.equals(requestB.longSymbol) &&
+            this.shortSymbol.equals(requestB.shortSymbol);
+    }
+    
+    public int hashCode() {
+        int hashCode = 1;
+        
+        hashCode = (hashCode * 31) + this.longSymbol.hashCode();
+        hashCode = (hashCode * 31) + this.shortSymbol.hashCode();
+        
+        return hashCode;
+    }
+    
+    public void notifyRequestApproved() {
+        this.strategy.notifyTradingRequestApproved();
+    }
 }

@@ -82,6 +82,12 @@ public interface Strategy {
     public JComponent getSwingComponent();
     
     /**
+     * For strategies that use a cross-strategy manager, this is used to
+     * indicate that the strategy has the go-ahread to trade.
+     */
+    public void notifyTradingRequestApproved();
+    
+    /**
      * Tells the strategy that now is the right time to update the swing component,
      * if it needs to. This is called by the contract manager after all pending
      * work has been cleared.

@@ -66,9 +66,10 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
         return strategy;
     }
     
-    protected void cancelRequest(final TradingRequest request)
+    protected void cancelRequest(final TradingRequest<CatchingDaggers> request)
         throws StrategyException {
-        CatchingDaggers topStrategy = null;
+        CatchingDaggers longTopStrategy = null;
+        CatchingDaggers shortTopStrategy = null;
         
         synchronized (this.tradingRequests) {
             TradingRequestQueue<CatchingDaggers> longRequests = this.tradingRequests.get(request.longSymbol);
@@ -76,11 +77,28 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
             
             longRequests.removeLongRequest(request);
             shortRequests.removeShortRequest(request);
-            // Check for a new request that can be fulfilled
-        }
-        
-        if (null != topStrategy) {
-            // XXX: topStrategy.notifyTradingRequestApproved();
+            
+            for (TradingRequest<CatchingDaggers> currentRequest: longRequests.getLongQueue()) {
+                final String blockingSymbol = currentRequest.shortSymbol;
+                final TradingRequestQueue<CatchingDaggers> blockingQueue = this.tradingRequests.get(blockingSymbol);
+                
+                if (blockingQueue.getShortTop() == null) {
+                    longRequests.setLongTop(currentRequest);
+                    blockingQueue.setShortTop(currentRequest);
+                    break;
+                }
+            }
+            
+            for (TradingRequest<CatchingDaggers> currentRequest: shortRequests.getShortQueue()) {
+                final String blockingSymbol = currentRequest.longSymbol;
+                final TradingRequestQueue<CatchingDaggers> blockingQueue = this.tradingRequests.get(blockingSymbol);
+                
+                if (blockingQueue.getLongTop() == null) {
+                    shortRequests.setShortTop(currentRequest);
+                    blockingQueue.setLongTop(currentRequest);
+                    break;
+                }
+            }
         }
     }    
     
@@ -122,31 +140,7 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
         }
         
         if (okayToGo) {
-            // XXX: topStrategy.notifyTradingRequestApproved();
-        }
-        
-        return;
-    }
-    
-    /**
-     * Used by CatchingDaggers to request permission to go short on a currency.
-     * If no other strategies are looking to go short on the given currency,
-     * returns true, otherwise returns false. Either way, it adds the strategy
-     * to the queue for that currency's short slot. If returns false, will
-     * call notifyShortRequestApproved() on the strategy once a slot is available,
-     * unless cancelRequestShort() is called on the factory first.
-     */
-    protected void requestShort(final String symbol, final CatchingDaggers requestor)
-        throws StrategyException {
-        synchronized (this.tradingRequests) {
-            TradingRequestQueue<CatchingDaggers> requests = this.tradingRequests.get(symbol);
-            
-            if (null == requests) {
-                requests = new TradingRequestQueue<CatchingDaggers>();
-                this.tradingRequests.put(symbol, requests);
-            }
-            
-            requests.addShortRequest(new TradingRequest(requestor, "", symbol));
+            request.notifyRequestApproved();
         }
         
         return;

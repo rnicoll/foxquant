@@ -399,6 +399,10 @@ public class CatchingDaggers implements Strategy {
         }
     }
     
+    public void notifyTradingRequestApproved() {
+        // FIXME: Do stuff here
+    }
+    
     private EntryOrder generateLongOrder()
         throws InsufficientDataException {
         final int cancelDistance = getCancelDistance();

@@ -50,6 +50,14 @@ class TradingRequestQueue<T extends Strategy> extends Object {
         return this.topShort;
     }
     
+    final Iterable<TradingRequest<T>> getLongQueue() {
+        return this.queueLong;
+    }
+    
+    final Iterable<TradingRequest<T>> getShortQueue() {
+        return this.queueShort;
+    }
+    
     void removeLongRequest(final TradingRequest request) {
         this.queueLong.remove(request);
     }
@@ -64,6 +72,7 @@ class TradingRequestQueue<T extends Strategy> extends Object {
         }
         
         this.topLong = setRequest;
+        this.queueLong.remove(this.topLong);
     }
     
     void setShortTop(final TradingRequest setRequest) {
@@ -72,5 +81,6 @@ class TradingRequestQueue<T extends Strategy> extends Object {
         }
         
         this.topShort = setRequest;
+        this.queueShort.remove(this.topShort);
     }
 }
