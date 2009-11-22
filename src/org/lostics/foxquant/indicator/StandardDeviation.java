@@ -57,6 +57,10 @@ public class StandardDeviation implements Indicator {
 
         return this.stdDev.get(offset);
     }
+    
+    public int getValueCount() {
+        return this.prices.getValueCount();
+    }
 
     public boolean hasEnoughBars() {
         return this.prices.getValueCount() >= this.period;

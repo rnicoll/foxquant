@@ -225,7 +225,8 @@ public class CatchingDaggers implements Strategy {
         } catch(InsufficientDataException e) {
             throw new StrategyException(e);
         }
-        this.historicalBars++;
+        
+        this.historicalBars = this.bidBB.getValueCount();
     }
     
     /**
@@ -424,8 +425,6 @@ public class CatchingDaggers implements Strategy {
         timeToClose = this.marketClose.getTime() - now;
 
         if (timeToClose <= MARKET_CLOSE_SOFT_STOP) {
-            log.debug("Too close to market close at "
-                + marketClose + ", remaining flat in market.");
             return null;
         }
         
@@ -862,17 +861,28 @@ public class CatchingDaggers implements Strategy {
                 : askPrice.toString());
             this.mostRecentUpdateLabel.setText(this.updateFormat.format(updateTime));
             
-            this.historyBarsLabel.setText(Integer.toString(CatchingDaggers.this.historicalBars));
+            this.historyBarsLabel.setText(Integer.toString(CatchingDaggers.this.historicalBars)
+                + " / "
+                + CatchingDaggers.this.totalHistoricalBars);
             this.marketCloseLabel.setText(formatMarketClose(CatchingDaggers.this.marketClose));
-            if (CatchingDaggers.this.entryOrderPool.isLong()) {
-                this.longShortLabel.setText("Long");
-            } else {
-                this.longShortLabel.setText("Short");
-            }
+            
+            if (CatchingDaggers.this.orderPlaced) {
+                if (CatchingDaggers.this.entryOrderPool.isLong()) {
+                    this.longShortLabel.setText("Long");
+                } else {
+                    this.longShortLabel.setText("Short");
+                }
 
-            this.actualEntryLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedEntryPrice));
-            this.actualProfitLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitLimitPrice));
-            this.actualLossLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitStopPrice));
+                this.actualEntryLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedEntryPrice));
+                this.actualProfitLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitLimitPrice));
+                this.actualLossLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitStopPrice));
+            } else {
+                this.longShortLabel.setText("N/A");
+
+                this.actualEntryLabel.setText("N/A");
+                this.actualProfitLabel.setText("N/A");
+                this.actualLossLabel.setText("N/A");
+            }
 
             super.paint(g);
         }
