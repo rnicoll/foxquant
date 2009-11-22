@@ -20,6 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
 
+import com.ib.client.Contract;
+
 import org.apache.log4j.Logger;
 
 import org.lostics.foxquant.database.DatabaseUnavailableException;
@@ -139,6 +141,9 @@ public class CatchingDaggers implements Strategy {
     /** Re-usable exit orders object */
     private final ExitOrders exitOrdersPool = new ExitOrders();
     
+    private final TradingRequest longTradeRequest;
+    private final TradingRequest shortTradeRequest;
+    
     /** The time at which the entry order initially completed (irrespective
      * of quantity).
      */
@@ -193,6 +198,13 @@ public class CatchingDaggers implements Strategy {
         this.totalHistoricalBars = setHistoricalBars;
         
         this.marketClose = setContractManager.getMarketCloseTime(new Date());
+        
+        final Contract contract = this.contractManager.getContract();
+        
+        this.longTradeRequest = new TradingRequest(setFactory,
+            this, contract.m_symbol, contract.m_currency);
+        this.shortTradeRequest = new TradingRequest(setFactory,
+            this, contract.m_currency, contract.m_symbol);
     }
     
     public boolean equals(final Object o) {
@@ -304,10 +316,10 @@ public class CatchingDaggers implements Strategy {
     }
     
     private EntryOrder generateLongOrder(final int distance)
-        throws InsufficientDataException {
+        throws InsufficientDataException, StrategyException {
         final int cancelDistance = getCancelDistance();
         final int projectedProfit;
-        final int transmitDistance;
+        final boolean transmit;
         
         // Go long
         this.projectedEntryPrice = this.getEntryLong();
@@ -339,11 +351,15 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        transmitDistance = getTransmitDistance();
+        transmit = getTransmitDistance() > distance &&
+            this.longTradeRequest.isApproved();
+        if (!transmit) {
+            this.longTradeRequest.queueIfInactive();
+        }
 
         this.entryOrderPool.setLong(this.actualEntryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
-            transmitDistance > distance);
+            transmit);
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
             
@@ -351,10 +367,10 @@ public class CatchingDaggers implements Strategy {
     }
     
     private EntryOrder generateShortOrder(final int distance)
-        throws InsufficientDataException {
+        throws InsufficientDataException, StrategyException {
         final int cancelDistance = getCancelDistance();
         final int projectedProfit;
-        final int transmitDistance;
+        final boolean transmit;
         
         // Go short
         this.projectedEntryPrice = this.getEntryShort();
@@ -386,11 +402,15 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        transmitDistance = getTransmitDistance();
+        transmit = getTransmitDistance() > distance &&
+            this.shortTradeRequest.isApproved();
+        if (!transmit) {
+            this.shortTradeRequest.queueIfInactive();
+        }
 
         this.entryOrderPool.setShort(this.actualEntryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
-            transmitDistance > distance);
+            transmit);
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
             
@@ -438,8 +458,14 @@ public class CatchingDaggers implements Strategy {
             
             if (distanceFromLongEntry < distanceFromShortEntry) {
                 entryOrder = generateLongOrder(distanceFromLongEntry);
+                if (null == entryOrder) {
+                    this.longTradeRequest.cancelIfQueued();
+                }
             } else {
                 entryOrder = generateShortOrder(distanceFromShortEntry);
+                if (null == entryOrder) {
+                    this.shortTradeRequest.cancelIfQueued();
+                }
             }
             
             this.orderPlaced = (entryOrder != null);
@@ -530,6 +556,11 @@ public class CatchingDaggers implements Strategy {
         final OrderStatus status, final int filled, final int remaining, final int avgFillPrice)
         throws StrategyException {
         this.timeExitedMarket = System.currentTimeMillis();
+        
+        if (0 == remaining) {
+            this.longTradeRequest.cancelIfQueued();
+            this.shortTradeRequest.cancelIfQueued();
+        }
         
         return;
     }
