@@ -46,13 +46,22 @@ import org.lostics.foxquant.Configuration;
  * SMA. Works well with 3 minute bars on currencies.
  */
 public class CatchingDaggers implements Strategy {
-    public static final long BAR_PERIOD = 60000; // One minute
+    private static final long ONE_MINUTE = 60000;
+
+    public static final long BAR_PERIOD = ONE_MINUTE; // One minute
+    
+    /**
+     * How long, after a trade exits, before the strategy will trade again.
+     * Used to ensure it doesn't re-enter immediately after a stop-loss is
+     * hit (although should probably wait until the market hits SMA really).
+     */
+    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 20;
     
     /**
      * How long the trader expects to be in the market, for each trade,
      * measured in minutes. Used to generate targetProfitPerMinute.
      */
-    public static final long EXPECTED_TRADE_DURATION_MINUTES = 60;
+    public static final int EXPECTED_TRADE_DURATION_MINUTES = 60;
     
     /**
      * Ratio of price as maximum distance from the entry point before
@@ -131,9 +140,13 @@ public class CatchingDaggers implements Strategy {
     private final ExitOrders exitOrdersPool = new ExitOrders();
     
     /** The time at which the entry order initially completed (irrespective
-     * of quantity.
+     * of quantity).
      */
     private long timeEnteredMarket = 0;
+    
+    /** The time at which the exit order completed filled. Used to handle cool-down.
+     */
+    private long timeExitedMarket = 0;
     
     private int actualEntryPrice;
     private int projectedEntryPrice;
@@ -404,6 +417,13 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
+        final long timeSinceTraded = now - this.timeExitedMarket;
+        
+        if (timeSinceTraded < COOLDOWN_PERIOD) {
+            log.debug("Most recent trade completed too recently, still in cooldown period.");
+            return null;
+        }
+        
         if (this.mostRecentAsk == null ||
             this.mostRecentBid == null) {
             log.debug("No most recent bid/ask to generate entry prices from.");
@@ -509,7 +529,8 @@ public class CatchingDaggers implements Strategy {
     public void handleExitOrderStatus(final OrderAction action, final boolean isLimitOrder,
         final OrderStatus status, final int filled, final int remaining, final int avgFillPrice)
         throws StrategyException {
-        // Don't care yet.
+        this.timeExitedMarket = System.currentTimeMillis();
+        
         return;
     }
     

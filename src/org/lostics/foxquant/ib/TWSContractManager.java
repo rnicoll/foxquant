@@ -469,6 +469,8 @@ public class TWSContractManager extends AbstractContractManager {
             final boolean isLimitOrder;
             final Order order;
             
+            // Order status is from one of the two exit orders.
+            
             if (this.limitProfitOrderWrapper.hasValidOrder() &&
                 details.getOrderID() == this.limitProfitOrderWrapper.getID()) {
                 order = this.limitProfitOrderWrapper.getOrder();
