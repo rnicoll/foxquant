@@ -19,6 +19,14 @@ public class EntryOrder extends Object {
     public EntryOrder() {
     }
     
+    public String toString() {
+        return "Entry order: "
+            + this.orderAction + " at "
+            + this.entryLimitPrice + " ("
+            + this.exitLimitPrice + ", "
+            + this.exitStopPrice + ")";
+    }
+    
     public void copy(final EntryOrder copyFrom) {
         this.transmit = copyFrom.transmit;
         this.entryLimitPrice = copyFrom.entryLimitPrice;
