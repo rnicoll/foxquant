@@ -683,7 +683,7 @@ public class CatchingDaggers implements Strategy {
     }
     
     public class TFPanel extends JPanel {
-        private final int ROWS = 3;
+        private final int ROWS = 4;
         private final int COLUMNS = 6;
     
         // Not thread safe, must only be called from the Swing event dispatcher
@@ -695,11 +695,15 @@ public class CatchingDaggers implements Strategy {
         
         private final JLabel historyBarsLabel = new JLabel("0");
         private final JLabel marketCloseLabel = new JLabel("-");
-        private final JLabel longShortLabel = new JLabel("");
+        private final JLabel longShortLabel = new JLabel("N/A");
         
         private final JLabel actualEntryLabel = new JLabel("N/A");
         private final JLabel actualProfitLabel = new JLabel("N/A");
         private final JLabel actualLossLabel = new JLabel("N/A");
+        
+        private final JLabel cancelDistanceLabel = new JLabel("");
+        private final JLabel orderDistanceLabel = new JLabel("");
+        private final JLabel transmitDistanceLabel = new JLabel("");
         
         private         TFPanel() {
             super();
@@ -726,6 +730,10 @@ public class CatchingDaggers implements Strategy {
             this.actualProfitLabel.setBorder(border);
             this.actualLossLabel.setBorder(border);
             
+            this.cancelDistanceLabel.setBorder(border);
+            this.orderDistanceLabel.setBorder(border);
+            this.transmitDistanceLabel.setBorder(border);
+            
             this.setLayout(layout);
             this.add(new JLabel("Bid price"));
             this.add(this.bidPriceLabel);
@@ -748,6 +756,13 @@ public class CatchingDaggers implements Strategy {
             this.add(this.actualProfitLabel);
             this.add(new JLabel("Loss"));
             this.add(this.actualLossLabel);
+            
+            this.add(new JLabel("Cancel"));
+            this.add(this.cancelDistanceLabel);
+            this.add(new JLabel("Place"));
+            this.add(this.orderDistanceLabel);
+            this.add(new JLabel("Transmit"));
+            this.add(this.transmitDistanceLabel);
 
             final int totalComponents = ROWS * COLUMNS;
             final Spring xInterColumnSpring = Spring.constant(5, 20, 1000);
@@ -883,6 +898,10 @@ public class CatchingDaggers implements Strategy {
                 this.actualProfitLabel.setText("N/A");
                 this.actualLossLabel.setText("N/A");
             }
+            
+            this.cancelDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.getCancelDistance()));
+            this.orderDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.getOrderDistance()));
+            this.transmitDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.getTransmitDistance()));
 
             super.paint(g);
         }
