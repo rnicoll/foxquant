@@ -109,18 +109,24 @@ public class UnitTestContractManager extends AbstractContractManager {
     public void close() {
     }
     
-    public static ContractDetails generateTestContractDetails() {
+    public static ContractDetails generateTestContractDetails(final String baseCurrency,
+        final String purchaseCurrency) {
         final ContractDetails contractDetails = new ContractDetails();
         final Contract contract = new Contract();
         
         contractDetails.m_minTick = 0.0005;
         contractDetails.m_summary = contract;
         contract.m_secType = "CASH";
-        contract.m_symbol = "GBP";
-        contract.m_currency = "USD";
-        contract.m_localSymbol = "GBP.USD";
+        contract.m_symbol = baseCurrency;
+        contract.m_currency = purchaseCurrency;
+        contract.m_localSymbol = baseCurrency
+            + "." + purchaseCurrency;
         
         return contractDetails;
+    }
+    
+    public static ContractDetails generateTestContractDetails() {
+        return generateTestContractDetails("GBP", "USD");
     }
 
     public long getBarPeriod() {
