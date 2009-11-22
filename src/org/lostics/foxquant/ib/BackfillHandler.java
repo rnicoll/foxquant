@@ -148,7 +148,6 @@ class BackfillHandler extends Thread implements HistoricalDataConsumer {
         // contract manager ready notification. For now though, we just pass
         // along incase the contract manager wants to know.
         this.contractManager.handleHistoricPriceFinished();
-        log.debug("Historical prices finished.");
 
         this.contractManager.start();
         this.connectionManager.fireContractManagerReady(this.contractManager);
@@ -170,8 +169,6 @@ class BackfillHandler extends Thread implements HistoricalDataConsumer {
         }
 
         dataStartTime = this.contractManager.getFirstGapInBackfillCache();
-        log.debug("First data missing from cache: "
-            + dataStartTime);
 
         if (null != dataStartTime) {
             // Check that the backfill period is not entirely a closed period for the market.
@@ -188,7 +185,7 @@ class BackfillHandler extends Thread implements HistoricalDataConsumer {
                 }
             }
             
-            System.out.println("Backfilling from "
+            log.info("Backfilling from "
                 + dataStartTime + " to "
                 + dataEndTime);
 

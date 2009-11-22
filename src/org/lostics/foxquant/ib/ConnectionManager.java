@@ -94,7 +94,7 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
     /* --- Private static variables start here ----------------------------- */
 
     /** Number of hours to backfill contract managers */
-    public static final int BACKFILL_HOURS = 6;
+    public static final int BACKFILL_HOURS = 3;
 
     /** Time zone to be used for time formatting. */
     public static final TimeZone timeZone = TimeZone.getTimeZone("GMT");

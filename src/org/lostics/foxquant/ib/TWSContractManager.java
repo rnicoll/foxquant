@@ -734,7 +734,6 @@ public class TWSContractManager extends AbstractContractManager {
             // backfill and realtime data at the same time.
             if (this.state == CMState.BACKFILL) {
                 try {
-                    log.debug("Doing backfill");
                     for (PeriodicData backdata: this.backfillCache) {
                         this.strategy.backfillMinuteBar(backdata);
                     }
@@ -745,7 +744,6 @@ public class TWSContractManager extends AbstractContractManager {
                         + e);
                     this.connectionManager.emergencyStop();
                 }
-                log.debug("Backfill complete, going to trading.");
             }
             
             try {
