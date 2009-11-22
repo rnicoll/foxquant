@@ -106,7 +106,7 @@ public class CatchingDaggersTest extends Object {
         testData.add(new PeriodicData(timeSeries[1], 9500));
         testData.add(new PeriodicData(timeSeries[2], 10500));
         testData.add(new PeriodicData(timeSeries[3], 10000));
-        testData.add(new PeriodicData(timeSeries[4], 10240));
+        testData.add(new PeriodicData(timeSeries[4], 10242));
 
         contractManager = new UnitTestContractManager(strategyFactory, testData, 60);
         contractManager.run();
@@ -120,7 +120,7 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
         
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10244, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10245, entryOrder.getEntryLimitPrice());
         Assert.assertEquals(true, entryOrder.shouldTransmit());
     }
     

@@ -67,20 +67,20 @@ public class CatchingDaggers implements Strategy {
      * Ratio of price as maximum distance from the entry point before
      * trades are transmitted from TWS to the market.
      */
-    public static final double TRANSMIT_DISTANCE_MULTIPLIER = 0.00040;
+    public static final double TRANSMIT_DISTANCE_MULTIPLIER = 0.00030;
     
     /**
      * Ratio of price as maximum distance from the entry point before
      * trades are entered into TWS. Outside this range orders are
      * cancelled.
      */
-    public static final double ORDER_DISTANCE_MULTIPLIER = 0.00060;
+    public static final double ORDER_DISTANCE_MULTIPLIER = 0.00050;
     
     /**
      * Ratio of price as maximum distance from the entry point before
      * trades entered trades are cancelled.
      */
-    public static final double CANCEL_DISTANCE_MULTIPLIER = 0.00070;
+    public static final double CANCEL_DISTANCE_MULTIPLIER = 0.00060;
     
     /**
      * Ratio of price as minimum expected profit from a trade. Below this
