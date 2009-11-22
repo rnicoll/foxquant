@@ -347,11 +347,9 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
+        this.longTradeRequest.queueIfInactive();
         transmit = getTransmitDistance() > distance &&
             this.longTradeRequest.isApproved();
-        if (!transmit) {
-            this.longTradeRequest.queueIfInactive();
-        }
 
         this.entryOrderPool.setLong(this.actualEntryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
@@ -398,11 +396,9 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
+        this.shortTradeRequest.queueIfInactive();
         transmit = getTransmitDistance() > distance &&
             this.shortTradeRequest.isApproved();
-        if (!transmit) {
-            this.shortTradeRequest.queueIfInactive();
-        }
 
         this.entryOrderPool.setShort(this.actualEntryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,

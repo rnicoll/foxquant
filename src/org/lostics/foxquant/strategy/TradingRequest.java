@@ -65,7 +65,7 @@ public class TradingRequest extends Object {
     }
     
     public boolean isApproved() {
-        return this.isApproved();
+        return this.isApproved;
     }
     
     public void notifyRequestApproved() {
