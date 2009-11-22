@@ -696,11 +696,11 @@ public class CatchingDaggers implements Strategy {
         
         private final JLabel historyBarsLabel = new JLabel("0");
         private final JLabel marketCloseLabel = new JLabel("-");
-        private final JLabel buySellLabel = new JLabel("");
+        private final JLabel longShortLabel = new JLabel("");
         
-        private final JLabel projectedEntryLabel = new JLabel("N/A");
-        private final JLabel projectedProfitLabel = new JLabel("N/A");
-        private final JLabel projectedLossLabel = new JLabel("N/A");
+        private final JLabel actualEntryLabel = new JLabel("N/A");
+        private final JLabel actualProfitLabel = new JLabel("N/A");
+        private final JLabel actualLossLabel = new JLabel("N/A");
         
         private         TFPanel() {
             super();
@@ -721,11 +721,11 @@ public class CatchingDaggers implements Strategy {
             
             this.historyBarsLabel.setBorder(border);
             this.marketCloseLabel.setBorder(border);
-            this.buySellLabel.setBorder(border);
+            this.longShortLabel.setBorder(border);
             
-            this.projectedEntryLabel.setBorder(border);
-            this.projectedProfitLabel.setBorder(border);
-            this.projectedLossLabel.setBorder(border);
+            this.actualEntryLabel.setBorder(border);
+            this.actualProfitLabel.setBorder(border);
+            this.actualLossLabel.setBorder(border);
             
             this.setLayout(layout);
             this.add(new JLabel("Bid price"));
@@ -740,15 +740,15 @@ public class CatchingDaggers implements Strategy {
             widestComponent = new JLabel("Market Close");
             this.add(widestComponent);
             this.add(this.marketCloseLabel);
-            this.add(new JLabel("Buy/Sell"));
-            this.add(this.buySellLabel);
+            this.add(new JLabel("Long/Short"));
+            this.add(this.longShortLabel);
             
-            this.add(new JLabel("P. Entry"));
-            this.add(this.projectedEntryLabel);
-            this.add(new JLabel("P. Profit"));
-            this.add(this.projectedProfitLabel);
-            this.add(new JLabel("P. Loss"));
-            this.add(this.projectedLossLabel);
+            this.add(new JLabel("Entry"));
+            this.add(this.actualEntryLabel);
+            this.add(new JLabel("Profit"));
+            this.add(this.actualProfitLabel);
+            this.add(new JLabel("Loss"));
+            this.add(this.actualLossLabel);
 
             final int totalComponents = ROWS * COLUMNS;
             final Spring xInterColumnSpring = Spring.constant(5, 20, 1000);
@@ -864,10 +864,15 @@ public class CatchingDaggers implements Strategy {
             
             this.historyBarsLabel.setText(Integer.toString(CatchingDaggers.this.historicalBars));
             this.marketCloseLabel.setText(formatMarketClose(CatchingDaggers.this.marketClose));
+            if (CatchingDaggers.this.entryOrderPool.isLong()) {
+                this.longShortLabel.setText("Long");
+            } else {
+                this.longShortLabel.setText("Short");
+            }
 
-            this.projectedEntryLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedEntryPrice));
-            //this.projectedProfitLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitProfitPrice));
-            //this.projectedLossLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitLossPrice));
+            this.actualEntryLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedEntryPrice));
+            this.actualProfitLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitLimitPrice));
+            this.actualLossLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitStopPrice));
 
             super.paint(g);
         }

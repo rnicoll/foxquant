@@ -68,6 +68,14 @@ public class EntryOrder extends Object {
         }
     }
     
+    public boolean isLong() {
+        return this.orderAction == OrderAction.BUY;
+    }
+    
+    public boolean isShort() {
+        return this.orderAction == OrderAction.SELL;
+    }
+    
     /**
      * Generates an order to go long.
      *
