@@ -41,6 +41,8 @@ public interface ContractManager {
      * synchronization.
      */
     public String formatTicksAsPrice(int ticks);
+        
+    public String getBaseCurrency();
 
     public Contract getContract();
 
@@ -81,6 +83,8 @@ public interface ContractManager {
      * Returns the minimum difference between prices for the contract being managed.
      */
     public double getMinimumTick();
+    
+    public String getPurchaseCurrency();
     
     public Strategy getStrategy();
 

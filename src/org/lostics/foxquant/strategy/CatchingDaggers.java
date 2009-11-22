@@ -20,8 +20,6 @@ import javax.swing.JPanel;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
 
-import com.ib.client.Contract;
-
 import org.apache.log4j.Logger;
 
 import org.lostics.foxquant.database.DatabaseUnavailableException;
@@ -199,12 +197,10 @@ public class CatchingDaggers implements Strategy {
         
         this.marketClose = setContractManager.getMarketCloseTime(new Date());
         
-        final Contract contract = this.contractManager.getContract();
-        
         this.longTradeRequest = new TradingRequest(setFactory,
-            this, contract.m_symbol, contract.m_currency);
+            this, this.contractManager.getBaseCurrency(), this.contractManager.getPurchaseCurrency());
         this.shortTradeRequest = new TradingRequest(setFactory,
-            this, contract.m_currency, contract.m_symbol);
+            this, this.contractManager.getPurchaseCurrency(), this.contractManager.getBaseCurrency());
     }
     
     public boolean equals(final Object o) {

@@ -131,6 +131,10 @@ public abstract class AbstractContractManager extends Thread implements Contract
         }
         return price;
     }
+        
+    public String getBaseCurrency() {
+        return this.contract.m_symbol;
+    }
 
     public Contract getContract() {
         return this.contract;
@@ -209,6 +213,10 @@ public abstract class AbstractContractManager extends Thread implements Contract
     
     public double getMinimumTick() {
         return this.getContractDetails().m_minTick;
+    }
+    
+    public String getPurchaseCurrency() {
+        return this.contract.m_currency;
     }
 
     public boolean isMarketOpen(final Date now) {
