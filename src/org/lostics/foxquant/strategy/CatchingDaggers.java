@@ -46,44 +46,44 @@ import org.lostics.foxquant.Configuration;
  * SMA. Works well with 3 minute bars on currencies.
  */
 public class CatchingDaggers implements Strategy {
-    public static final long BAR_PERIOD = 60000;
+    public static final long BAR_PERIOD = 60000; // One minute
     
     /**
      * How long the trader expects to be in the market, for each trade,
-     * measured in milliseconds.
+     * measured in minutes. Used to generate targetProfitPerMinute.
      */
-    public static final long EXPECTED_TRADE_LENGTH = 3600000;
+    public static final long EXPECTED_TRADE_DURATION_MINUTES = 60;
     
     /**
      * Ratio of price as maximum distance from the entry point before
      * trades are transmitted from TWS to the market.
      */
-    public static final double TRANSMIT_DISTANCE_MULTIPLIER = 0.00060;
+    public static final double TRANSMIT_DISTANCE_MULTIPLIER = 0.00040;
     
     /**
      * Ratio of price as maximum distance from the entry point before
      * trades are entered into TWS. Outside this range orders are
      * cancelled.
      */
-    public static final double ORDER_DISTANCE_MULTIPLIER = 0.00080;
+    public static final double ORDER_DISTANCE_MULTIPLIER = 0.00060;
     
     /**
      * Ratio of price as maximum distance from the entry point before
      * trades entered trades are cancelled.
      */
-    public static final double CANCEL_DISTANCE_MULTIPLIER = 0.00100;
+    public static final double CANCEL_DISTANCE_MULTIPLIER = 0.00070;
     
     /**
      * Ratio of price as minimum expected profit from a trade. Below this
      * there is too high a chance of getting stopped out early.
      */
-    public static final double MIN_PROFIT_MULTIPLIER = 0.0006;
+    public static final double MIN_PROFIT_MULTIPLIER = 0.00080;
     
     /**
      * Ratio of price as maximum expected profit from a trade. Beyond this
      * value it's assumed the market is too far out to be predictable.
      */
-    public static final double MAX_PROFIT_MULTIPLIER = 0.0025;
+    public static final double MAX_PROFIT_MULTIPLIER = 0.003;
     
     /**
      * Ratio of the distance between upper/lower band and the SMA, to expect
@@ -94,8 +94,8 @@ public class CatchingDaggers implements Strategy {
     /** Close out all positions 6 minutes before the market closes. */
     private static final int MARKET_CLOSE_HARD_STOP = 6 * 60 * 1000;
 
-    /** Don't open any more positions after 75 minutes before market close. */
-    private static final int MARKET_CLOSE_SOFT_STOP = 75 * 60 * 1000;
+    /** Don't open any more positions after 45 minutes before market close. */
+    private static final int MARKET_CLOSE_SOFT_STOP = 45 * 60 * 1000;
     
     // -----------------------------------------------------------------------
     // Finished with the constants.
@@ -130,25 +130,28 @@ public class CatchingDaggers implements Strategy {
     /** Re-usable exit orders object */
     private final ExitOrders exitOrdersPool = new ExitOrders();
     
+    /** The time at which the entry order initially completed (irrespective
+     * of quantity.
+     */
+    private long timeEnteredMarket = 0;
+    
     private int actualEntryPrice;
     private int projectedEntryPrice;
+    private int actualExitLimitPrice;
+    private int projectedExitLimitPrice;
+    private int actualExitStopPrice;
+    private int projectedExitStopPrice;
     
     /**
      * The value difference the strategy would expect to make as a profit,
      * based on actual entry price. Used to calculate limit orders.
      */
-    private int actualProfitTarget;
+    private int targetProfit;
     
     /**
-     * The value difference the strategy would expect to make as a profit,
-     * based on projected entry price. Used to calculate stop loss.
-     */
-    private int projectedProfitTarget;
-    
-    /**
-     * The profit rate this trade would achieve if it hits profitTarget in
-     * exactly EXPECTED_TRADE_LENGTH milliseconds. Stored in minutes for precision
-     * reasons.
+     * The profit rate this trade would achieve if it hits targetProfit in
+     * exactly EXPECTED_TRADE_DURATION_MINUTES minutes. Stored in minutes
+     * for precision reasons.
      */
     private int targetProfitPerMinute;
 
@@ -282,6 +285,208 @@ public class CatchingDaggers implements Strategy {
         // Convert this to a valid price point. Note this uses ceiling, not round.
         return (int)Math.ceil(distance);
     }
+    
+    public void notifyTradingRequestApproved() {
+        // FIXME: Do stuff here
+    }
+    
+    private EntryOrder generateLongOrder(final int distance)
+        throws InsufficientDataException {
+        final int cancelDistance = getCancelDistance();
+        final int projectedProfit;
+        final int transmitDistance;
+        
+        // Go long
+        this.projectedEntryPrice = this.getEntryLong();
+        this.actualEntryPrice = Math.min(this.mostRecentAsk, this.projectedEntryPrice);
+        
+        // We're closer to going long, so we want to get the distance from
+        // the SMA down to the entry price.
+        this.targetProfit = (int)Math.ceil((this.getExitLong() - this.actualEntryPrice) * PROFIT_TARGET_MULTIPLIER);
+        
+        this.projectedExitLimitPrice = this.actualEntryPrice + this.targetProfit;
+        this.projectedExitStopPrice = this.actualEntryPrice - this.targetProfit;
+        
+        // Check the spread on the Bollinger Band is wide enough to make this
+        // a viable trade.
+        projectedProfit = (int)Math.ceil((this.getExitLong() - this.projectedEntryPrice) * PROFIT_TARGET_MULTIPLIER);
+        if (projectedProfit < getMinimumProfit()) {
+            return null;
+        }
+        
+        if (distance > cancelDistance) {
+            // Too far out, cancel any existing order.
+            return null;
+        }
+        
+        if (!this.orderPlaced &&
+            distance > getOrderDistance()) {
+            // No pre-existing order, and we're too far out to create a
+            // new order, so delete them.
+            return null;
+        }
+        
+        transmitDistance = getTransmitDistance();
+
+        this.entryOrderPool.setLong(this.actualEntryPrice,
+            this.projectedExitLimitPrice, this.projectedExitStopPrice,
+            transmitDistance > distance);
+        this.actualExitLimitPrice = this.projectedExitLimitPrice;
+        this.actualExitStopPrice = this.projectedExitStopPrice;
+            
+        return this.entryOrderPool;
+    }
+    
+    private EntryOrder generateShortOrder(final int distance)
+        throws InsufficientDataException {
+        final int cancelDistance = getCancelDistance();
+        final int projectedProfit;
+        final int transmitDistance;
+        
+        // Go short
+        this.projectedEntryPrice = this.getEntryShort();
+        this.actualEntryPrice = Math.max(this.mostRecentBid, this.projectedEntryPrice);
+        
+        // We're closer to going short, so we want to get the distance from
+        // the entry price down to the SMA.
+        this.targetProfit = (int)Math.ceil((this.getExitLong() - this.actualEntryPrice) * PROFIT_TARGET_MULTIPLIER);
+        
+        this.projectedExitLimitPrice = this.actualEntryPrice - this.targetProfit;
+        this.projectedExitStopPrice = this.actualEntryPrice + this.targetProfit;
+        
+        // Check the spread on the Bollinger Band is wide enough to make this
+        // a viable trade.
+        projectedProfit = (int)Math.ceil((this.projectedEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+        if (projectedProfit < getMinimumProfit()) {
+            return null;
+        }
+        
+        if (distance > cancelDistance) {
+            // Too far out, cancel any existing order.
+            return null;
+        }
+        
+        if (!this.orderPlaced &&
+            distance > getOrderDistance()) {
+            // No pre-existing order, and we're too far out to create a
+            // new order, so delete them.
+            return null;
+        }
+        
+        transmitDistance = getTransmitDistance();
+
+        this.entryOrderPool.setShort(this.actualEntryPrice,
+            this.projectedExitLimitPrice, this.projectedExitStopPrice,
+            transmitDistance > distance);
+        this.actualExitLimitPrice = this.projectedExitLimitPrice;
+        this.actualExitStopPrice = this.projectedExitStopPrice;
+            
+        return this.entryOrderPool;
+    }
+
+    public EntryOrder getOrdersFromFlat()
+        throws StrategyException {
+        if (this.historicalBars < this.totalHistoricalBars) {
+            return null;
+        }
+        
+        final long timeToClose;
+        final long now = System.currentTimeMillis();
+        if (this.marketClose.getTime() < now) {
+            final Date nowDate = new Date(now);
+            this.marketClose = this.contractManager.getMarketCloseTime(nowDate);
+        }
+        timeToClose = this.marketClose.getTime() - now;
+
+        if (timeToClose <= MARKET_CLOSE_SOFT_STOP) {
+            log.debug("Too close to market close at "
+                + marketClose + ", remaining flat in market.");
+            return null;
+        }
+        
+        if (this.mostRecentAsk == null ||
+            this.mostRecentBid == null) {
+            log.debug("No most recent bid/ask to generate entry prices from.");
+            // XXX: Should have a countdown timer before we're willing to re-enter the market
+            return null;
+        }
+        
+        try {
+            final EntryOrder entryOrder;
+            final int distanceFromShortEntry = this.getEntryShort() - this.mostRecentBid;
+            final int distanceFromLongEntry = this.mostRecentAsk - this.getEntryLong();
+            
+            if (distanceFromLongEntry < distanceFromShortEntry) {
+                entryOrder = generateLongOrder(distanceFromLongEntry);
+            } else {
+                entryOrder = generateShortOrder(distanceFromShortEntry);
+            }
+            
+            this.orderPlaced = (entryOrder != null);
+
+            return entryOrder;
+        } catch(InsufficientDataException e) {
+            throw new StrategyException(e);
+        }
+    }
+
+    public ExitOrders getOrdersFromLong()
+        throws StrategyException {
+        // Surely we can cache these?
+        final Date now = new Date();
+        final Date marketClose = this.contractManager.getMarketCloseTime(now);
+        final long timeToClose = marketClose.getTime() - now.getTime();
+
+        if (timeToClose <= MARKET_CLOSE_HARD_STOP) {
+            return null;
+        }
+        
+        final int minutesInTrade = (int)Math.round((System.currentTimeMillis() - this.timeEnteredMarket) / 60000.0);
+        int fastProfit = this.targetProfitPerMinute * minutesInTrade * 2;
+        final int fastProfitLimit;
+        
+        fastProfit = Math.max(fastProfit, getMinimumProfit());
+        this.exitOrdersPool.setLong(this.actualEntryPrice + Math.min(this.targetProfit, fastProfit),
+            this.actualEntryPrice - this.targetProfit);
+        
+        return this.exitOrdersPool;
+    }
+
+    public ExitOrders getOrdersFromShort()
+        throws StrategyException {
+        // Surely we can cache these?
+        final Date now = new Date();
+        final Date marketClose = this.contractManager.getMarketCloseTime(now);
+        final long timeToClose = marketClose.getTime() - now.getTime();
+
+        if (timeToClose <= MARKET_CLOSE_HARD_STOP) {
+            return null;
+        }
+        
+        final int minutesInTrade = (int)Math.round((System.currentTimeMillis() - this.timeEnteredMarket) / 60000.0);
+        int fastProfit = this.targetProfitPerMinute * minutesInTrade * 2;
+        final int fastProfitLimit;
+        
+        fastProfit = Math.max(fastProfit, getMinimumProfit());
+        this.exitOrdersPool.setLong(this.actualEntryPrice + Math.min(this.targetProfit, fastProfit),
+            this.actualEntryPrice - this.targetProfit);
+        
+        return this.exitOrdersPool;
+    }
+    
+    /* MUST only be called from the Swing event dispatcher thread. Panel
+     * construction is done by this method rather than when the strategy
+     * is initialised to ensure it's done in the correct thread.
+     */
+    public TFPanel getSwingComponent() {
+        if (null == this.swingPanel) {
+            TFPanel panel = new TFPanel();
+            panel.createAndShowUI();
+            this.swingPanel = panel;
+        }
+        
+        return this.swingPanel;
+    }
 
     public void handleEntryOrderStatus(final OrderAction action, final OrderStatus status, final int filled,
         final int remaining, final int avgFillPrice)
@@ -314,23 +519,20 @@ public class CatchingDaggers implements Strategy {
         final int actualTradeDistance;
         final int projectedTradeDistance;
         
+        this.timeEnteredMarket = System.currentTimeMillis();
         this.actualEntryPrice = avgFillPrice;
         
-        if (action == OrderAction.BUY) {
-            this.projectedEntryPrice = getEntryLong();
-            
+        if (action == OrderAction.BUY) {            
             projectedTradeDistance = this.getExitLong() - this.projectedEntryPrice;
             actualTradeDistance = this.getExitLong() - this.actualEntryPrice;
-        } else {
-            this.projectedEntryPrice = getEntryShort();
-            
+        } else {            
             projectedTradeDistance = this.projectedEntryPrice - this.getExitShort();
             actualTradeDistance = this.actualEntryPrice - this.getExitShort();
         }
         
         // Profit target is a multiple of trade distance
-        this.projectedProfitTarget = (int)Math.round(projectedTradeDistance * PROFIT_TARGET_MULTIPLIER);
-        this.actualProfitTarget = (int)Math.round(actualTradeDistance * PROFIT_TARGET_MULTIPLIER);
+        this.targetProfit = (int)Math.round(actualTradeDistance * PROFIT_TARGET_MULTIPLIER);
+        this.targetProfitPerMinute = (int)Math.ceil(this.targetProfit / EXPECTED_TRADE_DURATION_MINUTES);
     }
 
     public void handleTick(final TickData[] tickData)
@@ -397,217 +599,6 @@ public class CatchingDaggers implements Strategy {
                 }
             }
         }
-    }
-    
-    public void notifyTradingRequestApproved() {
-        // FIXME: Do stuff here
-    }
-    
-    private EntryOrder generateLongOrder()
-        throws InsufficientDataException {
-        final int cancelDistance = getCancelDistance();
-        final int distance; // Distance between bid/ask and entry price
-        final int minimumProfit = getMinimumProfit();
-        final int orderDistance;
-        final int transmitDistance;
-        
-        // Go long
-        this.projectedEntryPrice = this.getEntryLong();
-        this.actualEntryPrice = Math.min(this.mostRecentAsk, this.projectedEntryPrice);
-        
-        // We're closer to going short, so we want to get the distance from
-        // the current price down to the SMA.
-        this.projectedProfitTarget = (int)Math.ceil((this.getExitLong() - this.projectedEntryPrice) * PROFIT_TARGET_MULTIPLIER);
-        if (this.projectedProfitTarget < minimumProfit) {
-            // log.debug("Projected profit too low, remaining flat in market.");
-            return null;
-        }
-        
-        distance = this.mostRecentAsk - this.projectedEntryPrice;
-        if (distance > cancelDistance) {
-            // Too far out, cancel any existing order.
-            // log.debug("Too far from entry price, cancelling any orders and remaining flat in market.");
-            return null;
-        }
-        
-        orderDistance = getOrderDistance();
-        if (!this.orderPlaced &&
-            distance > orderDistance) {
-            // No pre-existing order, and we're too far out to create a
-            // new order, so delete them.
-            // log.debug("Too far from entry price to generate a new entry order yet.");
-            return null;
-        }
-        
-        transmitDistance = getTransmitDistance();
-
-        this.actualProfitTarget = (int)Math.ceil((this.getExitLong() - this.actualEntryPrice) * PROFIT_TARGET_MULTIPLIER);
-        
-        this.entryOrderPool.setLong(this.actualEntryPrice,
-            this.actualEntryPrice + minimumProfit, this.actualEntryPrice - this.projectedProfitTarget,
-            transmitDistance > distance);
-            
-        return this.entryOrderPool;
-    }
-    
-    private EntryOrder generateShortOrder()
-        throws InsufficientDataException {
-        final int cancelDistance = getCancelDistance();
-        final int distance; // Distance between bid/ask and entry price
-        final int minimumProfit = getMinimumProfit();
-        final int orderDistance;
-        final int transmitDistance;
-            
-        // Go short
-        this.projectedEntryPrice = this.getEntryShort();
-        this.actualEntryPrice = (int)Math.max(this.mostRecentBid, this.projectedEntryPrice);
-        
-        // We're closer to going short, so we want to get the distance from
-        // the current price down to the SMA.
-        this.projectedProfitTarget = (int)Math.round((this.projectedEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
-        if (this.projectedProfitTarget < minimumProfit) {
-            //log.debug("Projected profit too low, remaining flat in market.");
-            return null;
-        }
-        
-        distance = this.projectedEntryPrice - this.mostRecentBid;
-        if (distance > cancelDistance) {
-            // Too far out, cancel any existing order.
-            //log.debug("Too far from entry price, cancelling any orders and remaining flat in market.");
-            return null;
-        }
-        
-        orderDistance = getOrderDistance();
-        if (!this.orderPlaced &&
-            distance > orderDistance) {
-            // No pre-existing order, and we're too far out to create a
-            // new order, so delete them.
-            //log.debug("Too far from entry price to generate a new entry order yet.");
-            return null;
-        }
-        
-        transmitDistance = getTransmitDistance();
-        
-        this.actualProfitTarget = (int)Math.ceil((this.actualEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
-        
-        this.entryOrderPool.setShort(this.actualEntryPrice,
-            this.actualEntryPrice - minimumProfit, this.actualEntryPrice + this.projectedProfitTarget,
-            transmitDistance > distance);
-        
-        return this.entryOrderPool;
-    }
-
-    private boolean insufficientDataReported = false;
-
-    public EntryOrder getOrdersFromFlat()
-        throws StrategyException {
-        if (this.historicalBars < this.totalHistoricalBars) {
-            if (!insufficientDataReported) {
-                // XXX: need a cleaner solution for reporting this initially. Once off initialisation code?
-                log.debug("Not enough data ("
-                    + this.historicalBars + " out of "
-                    + this.totalHistoricalBars + "), remaining flat in market.");
-                insufficientDataReported = true;
-            }
-            return null;
-        }
-        
-        final long timeToClose;
-        final long now = System.currentTimeMillis();
-        if (this.marketClose.getTime() < now) {
-            final Date nowDate = new Date(now);
-            this.marketClose = this.contractManager.getMarketCloseTime(nowDate);
-        }
-        timeToClose = this.marketClose.getTime() - now;
-
-        if (timeToClose <= MARKET_CLOSE_SOFT_STOP) {
-            log.debug("Too close to market close at "
-                + marketClose + ", remaining flat in market.");
-            return null;
-        }
-        
-        if (this.mostRecentAsk == null ||
-            this.mostRecentBid == null) {
-            log.debug("No most recent bid/ask to generate entry prices from.");
-            // XXX: Should have a countdown timer before we're willing to re-enter the market
-            return null;
-        }
-        
-        try {
-            final EntryOrder entryOrder;
-            final double askDistanceFromEntry = this.getEntryShort() - this.mostRecentAsk;
-            final double bidDistanceFromEntry = this.mostRecentBid - this.getEntryLong();
-            
-            if (bidDistanceFromEntry < askDistanceFromEntry) {
-                entryOrder = generateLongOrder();
-            } else {
-                entryOrder = generateShortOrder();
-            }
-            
-            this.orderPlaced = (entryOrder != null);
-
-            return entryOrder;
-        } catch(InsufficientDataException e) {
-            throw new StrategyException(e);
-        }
-    }
-
-    public ExitOrders getOrdersFromLong()
-        throws StrategyException {
-        // Surely we can cache these?
-        final Date now = new Date();
-        final Date marketClose = this.contractManager.getMarketCloseTime(now);
-        final long timeToClose = marketClose.getTime() - now.getTime();
-
-        if (timeToClose <= MARKET_CLOSE_HARD_STOP) {
-            return null;
-        }
-        
-        // XXX: Need to adapt to exit-fast if we get a high profit opportunity
-        
-        // XXX: Need to check for the mid-point moving past our exit point, and
-        // adjust limit/stop accordingly.
-        
-        this.exitOrdersPool.setLong(this.actualEntryPrice + this.actualProfitTarget,
-            this.actualEntryPrice - this.projectedProfitTarget);
-        
-        return this.exitOrdersPool;
-    }
-
-    public ExitOrders getOrdersFromShort()
-        throws StrategyException {
-        // Surely we can cache these?
-        final Date now = new Date();
-        final Date marketClose = this.contractManager.getMarketCloseTime(now);
-        final long timeToClose = marketClose.getTime() - now.getTime();
-
-        if (timeToClose <= MARKET_CLOSE_HARD_STOP) {
-            return null;
-        }
-        
-        // XXX: Need to adapt to exit-fast if we get a high profit opportunity
-        
-        // XXX: Need to check for the mid-point moving past our exit point, and
-        // adjust limit/stop accordingly.
-        
-        this.exitOrdersPool.setShort(this.actualEntryPrice - this.actualProfitTarget,
-            this.actualEntryPrice + this.projectedProfitTarget);
-        
-        return this.exitOrdersPool;
-    }
-    
-    /* MUST only be called from the Swing event dispatcher thread. Panel
-     * construction is done by this method rather than when the strategy
-     * is initialised to ensure it's done in the correct thread.
-     */
-    public TFPanel getSwingComponent() {
-        if (null == this.swingPanel) {
-            TFPanel panel = new TFPanel();
-            panel.createAndShowUI();
-            this.swingPanel = panel;
-        }
-        
-        return this.swingPanel;
     }
 
     private void logStateInDB(final Timestamp timestamp)
