@@ -9,30 +9,30 @@ import java.util.LinkedHashSet;
  * Class for tracking strategies requests' for trading permission. This class
  * is NOT thread safe, so access must be externally synchronized.
  */
-class TradingRequestQueue<T extends Strategy> extends Object {
+class TradingRequestQueue extends Object {
     /**
      * Strategy currently given permission to go long on this currency,
      * or null if no currency has that permission.
      */
-    private TradingRequest<T> topLong;
+    private TradingRequest topLong;
     
     /**
      * Strategy currently given permission to go short on this currency,
      * or null if no currency has that permission.
      */
-    private TradingRequest<T> topShort;
+    private TradingRequest topShort;
     
     /**
      * Ordered list of strategies waiting for permission to go long, ordered
      * by when they joined the queue.
      */
-    private LinkedHashSet<TradingRequest<T>> queueLong = new LinkedHashSet<TradingRequest<T>>();
+    private LinkedHashSet<TradingRequest> queueLong = new LinkedHashSet<TradingRequest>();
     
     /**
      * Ordered list of strategies waiting for permission to go short, ordered
      * by when they joined the queue.
      */
-    private LinkedHashSet<TradingRequest<T>> queueShort = new LinkedHashSet<TradingRequest<T>>();
+    private LinkedHashSet<TradingRequest> queueShort = new LinkedHashSet<TradingRequest>();
     
     void addLongRequest(final TradingRequest request) {
         this.queueLong.add(request);
@@ -50,11 +50,11 @@ class TradingRequestQueue<T extends Strategy> extends Object {
         return this.topShort;
     }
     
-    final Iterable<TradingRequest<T>> getLongQueue() {
+    final Iterable<TradingRequest> getLongQueue() {
         return this.queueLong;
     }
     
-    final Iterable<TradingRequest<T>> getShortQueue() {
+    final Iterable<TradingRequest> getShortQueue() {
         return this.queueShort;
     }
     

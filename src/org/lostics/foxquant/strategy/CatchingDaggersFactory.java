@@ -24,8 +24,8 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
     public static final double DEFAULT_SPREAD = 2;
     
     // Synchronize access to 'tradingRequests' on itself
-    private final Map<String, TradingRequestQueue<CatchingDaggers>> tradingRequests
-        = new HashMap<String, TradingRequestQueue<CatchingDaggers>>();
+    private final Map<String, TradingRequestQueue> tradingRequests
+        = new HashMap<String, TradingRequestQueue>();
     
     private int historicalBars = DEFAULT_HISTORICAL_BARS;
     private double spread = DEFAULT_SPREAD;
@@ -66,21 +66,21 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
         return strategy;
     }
     
-    protected void cancelRequest(final TradingRequest<CatchingDaggers> request)
+    protected void cancelRequest(final TradingRequest request)
         throws StrategyException {
         CatchingDaggers longTopStrategy = null;
         CatchingDaggers shortTopStrategy = null;
         
         synchronized (this.tradingRequests) {
-            TradingRequestQueue<CatchingDaggers> longRequests = this.tradingRequests.get(request.longSymbol);
-            TradingRequestQueue<CatchingDaggers> shortRequests = this.tradingRequests.get(request.shortSymbol);
+            final TradingRequestQueue longRequests = this.tradingRequests.get(request.longSymbol);
+            final TradingRequestQueue shortRequests = this.tradingRequests.get(request.shortSymbol);
             
             longRequests.removeLongRequest(request);
             shortRequests.removeShortRequest(request);
             
-            for (TradingRequest<CatchingDaggers> currentRequest: longRequests.getLongQueue()) {
+            for (TradingRequest currentRequest: longRequests.getLongQueue()) {
                 final String blockingSymbol = currentRequest.shortSymbol;
-                final TradingRequestQueue<CatchingDaggers> blockingQueue = this.tradingRequests.get(blockingSymbol);
+                final TradingRequestQueue blockingQueue = this.tradingRequests.get(blockingSymbol);
                 
                 if (blockingQueue.getShortTop() == null) {
                     longRequests.setLongTop(currentRequest);
@@ -89,9 +89,9 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
                 }
             }
             
-            for (TradingRequest<CatchingDaggers> currentRequest: shortRequests.getShortQueue()) {
+            for (TradingRequest currentRequest: shortRequests.getShortQueue()) {
                 final String blockingSymbol = currentRequest.longSymbol;
-                final TradingRequestQueue<CatchingDaggers> blockingQueue = this.tradingRequests.get(blockingSymbol);
+                final TradingRequestQueue blockingQueue = this.tradingRequests.get(blockingSymbol);
                 
                 if (blockingQueue.getLongTop() == null) {
                     shortRequests.setShortTop(currentRequest);
@@ -100,7 +100,7 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
                 }
             }
         }
-    }    
+    }
     
     /**
      * Used by CatchingDaggers to request permission to go long on a currency.
@@ -115,15 +115,15 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
         final boolean okayToGo;
         
         synchronized (this.tradingRequests) {
-            TradingRequestQueue<CatchingDaggers> longRequests = this.tradingRequests.get(request.longSymbol);
-            TradingRequestQueue<CatchingDaggers> shortRequests = this.tradingRequests.get(request.shortSymbol);
+            TradingRequestQueue longRequests = this.tradingRequests.get(request.longSymbol);
+            TradingRequestQueue shortRequests = this.tradingRequests.get(request.shortSymbol);
             
             if (null == longRequests) {
-                longRequests = new TradingRequestQueue<CatchingDaggers>();
+                longRequests = new TradingRequestQueue();
                 this.tradingRequests.put(request.longSymbol, longRequests);
             }
             if (null == shortRequests) {
-                shortRequests = new TradingRequestQueue<CatchingDaggers>();
+                shortRequests = new TradingRequestQueue();
                 this.tradingRequests.put(request.shortSymbol, shortRequests);
             }
             
