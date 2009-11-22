@@ -45,6 +45,10 @@ public class Momentum implements Indicator {
         return this.prices.get(offset) - this.prices.get(offset + period - 1);
     }
 
+    public int getValueCount() {
+        return this.prices.getValueCount();
+    }
+
     public boolean hasEnoughBars() {
         return this.prices.getValueCount() >= this.period;
     }

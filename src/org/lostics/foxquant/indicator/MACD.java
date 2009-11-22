@@ -84,8 +84,12 @@ public class MACD implements Indicator {
         return this.slow.getEMA();
     }
 
+    public int getValueCount() {
+        return this.signal.getValueCount();
+    }
+
     public boolean hasEnoughBars() {
-        return this.signal.getValueCount() == this.signal.getSize();
+        return this.getValueCount() == this.signal.getSize();
     }
 
     public void handlePeriodicData(final PeriodicData periodicData)

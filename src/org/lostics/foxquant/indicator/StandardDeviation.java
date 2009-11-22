@@ -57,7 +57,7 @@ public class StandardDeviation implements Indicator {
 
         return this.stdDev.get(offset);
     }
-    
+
     public int getValueCount() {
         return this.prices.getValueCount();
     }

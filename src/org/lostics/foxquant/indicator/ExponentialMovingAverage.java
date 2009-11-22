@@ -35,8 +35,12 @@ public class ExponentialMovingAverage implements Indicator {
         return this.prices.getEMA();
     }
 
+    public int getValueCount() {
+        return this.prices.getValueCount();
+    }
+
     public boolean hasEnoughBars() {
-        return this.prices.getValueCount() >= this.prices.getSize();
+        return this.getValueCount() == this.prices.getSize();
     }
 
     public void handlePeriodicData(final PeriodicData periodicData)

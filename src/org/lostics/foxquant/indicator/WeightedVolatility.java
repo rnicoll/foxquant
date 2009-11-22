@@ -53,8 +53,12 @@ public class WeightedVolatility implements Indicator {
         return this.volatilities.get(offset);
     }
 
+    public int getValueCount() {
+        return this.prices.size();
+    }
+
     public boolean hasEnoughBars() {
-        return this.prices.size() >= this.period;
+        return this.getValueCount() >= this.period;
     }
 
     public void handlePeriodicData(final PeriodicData periodicData)

@@ -129,11 +129,6 @@ public class BollingerBands implements Indicator {
             : new Integer((int)Math.round(value)));
     }
     
-    /**
-     * Retrieves the number of data points that this indicator has to generate
-     * values from. In real terms, this means the number of data points inputted,
-     * capped by the size of the lookback period.
-     */
     public int getValueCount() {
         return this.standardDeviation.getValueCount();
     }
