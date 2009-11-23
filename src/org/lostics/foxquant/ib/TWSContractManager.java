@@ -428,16 +428,18 @@ public class TWSContractManager extends AbstractContractManager {
             } else if (status == OrderStatus.Filled) {
                 final TwitterGateway twitter = this.connectionManager.getTwitterGateway();
                 
-                if (order.m_action.equals(OrderAction.BUY.toString())) {
-                    twitter.updateStatus("Bought "
-                        + this.DEFAULT_QUANTITY + " "
-                        + this.contract.m_localSymbol + " at "
-                        + details.getAvgFillPrice() + ".");
-                } else {
-                    twitter.updateStatus("Sold "
-                        + this.DEFAULT_QUANTITY + " "
-                        + this.contract.m_localSymbol + " at "
-                        + details.getAvgFillPrice() + ".");
+                if (null != twitter) {
+                    if (order.m_action.equals(OrderAction.BUY.toString())) {
+                        twitter.updateStatus("Bought "
+                            + this.DEFAULT_QUANTITY + " "
+                            + this.contract.m_localSymbol + " at "
+                            + details.getAvgFillPrice() + ".");
+                    } else {
+                        twitter.updateStatus("Sold "
+                            + this.DEFAULT_QUANTITY + " "
+                            + this.contract.m_localSymbol + " at "
+                            + details.getAvgFillPrice() + ".");
+                    }
                 }
             } else if (status == OrderStatus.Cancelled) {
                 if (this.state != CMState.TARGET_FLAT) {
