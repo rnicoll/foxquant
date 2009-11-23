@@ -59,11 +59,19 @@ class TradingRequestQueue extends Object {
     }
     
     void removeLongRequest(final TradingRequest request) {
-        this.queueLong.remove(request);
+        if (this.topLong.equals(request)) {
+            this.topLong = null;
+        } else {
+            this.queueLong.remove(request);
+        }
     }
     
     void removeShortRequest(final TradingRequest request) {
-        this.queueShort.remove(request);
+        if (this.topShort.equals(request)) {
+            this.topShort = null;
+        } else {
+            this.queueShort.remove(request);
+        }
     }
     
     void setLongTop(final TradingRequest setRequest) {
