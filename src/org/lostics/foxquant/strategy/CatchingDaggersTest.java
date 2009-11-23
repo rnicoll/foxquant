@@ -177,6 +177,7 @@ public class CatchingDaggersTest extends Object {
         Assert.assertEquals(9000, entryOrder.getEntryLimitPrice());
         // XXX: Need to manually check this number
         Assert.assertEquals(10251, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(7749, entryOrder.getExitStopPrice());
     }
     
     /**
@@ -213,7 +214,6 @@ public class CatchingDaggersTest extends Object {
 
         contractManagerEURUSD.run();
         entryOrder = contractManagerEURUSD.getOrdersFromFlat();
-        System.out.println(entryOrder.toString());
         Assert.assertFalse(entryOrder.shouldTransmit());
 
         contractManagerGBPUSD.close();
@@ -247,6 +247,7 @@ public class CatchingDaggersTest extends Object {
 
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
         Assert.assertEquals(10000, entryOrder.getEntryLimitPrice());
-        Assert.assertEquals(10999, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(9000, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(11000, entryOrder.getExitStopPrice());
     }
 }

@@ -373,7 +373,7 @@ public class CatchingDaggers implements Strategy {
         
         // We're closer to going short, so we want to get the distance from
         // the entry price down to the SMA.
-        this.targetProfit = (int)Math.ceil((this.getExitLong() - this.actualEntryPrice) * PROFIT_TARGET_MULTIPLIER);
+        this.targetProfit = (int)Math.ceil((this.actualEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
         
         this.projectedExitLimitPrice = this.actualEntryPrice - this.targetProfit;
         this.projectedExitStopPrice = this.actualEntryPrice + this.targetProfit;
