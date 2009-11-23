@@ -179,6 +179,48 @@ public class CatchingDaggersTest extends Object {
         Assert.assertEquals(10251, entryOrder.getExitLimitPrice());
     }
     
+    /**
+     * Tests two different strategies trying to go long on the same currency,
+     * at the same time.
+     */
+    @Test
+    public void testDualThreePeriodLong()
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
+        final ContractDetails contractDetailsGBPUSD = UnitTestContractManager.generateTestContractDetails("GBP", "USD");
+        final ContractDetails contractDetailsEURUSD = UnitTestContractManager.generateTestContractDetails("EUR", "USD");
+        final UnitTestContractManager contractManagerGBPUSD;
+        final UnitTestContractManager contractManagerEURUSD;
+        final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(3, 0.5);
+        final Date now = new Date();
+        final Timestamp[] timeSeries = TestUtils.generateTimeSeries(3, now, 60000);
+        final List<PeriodicData> testData = new ArrayList<PeriodicData>();
+
+        testData.add(new PeriodicData(timeSeries[0], 12000));
+        testData.add(new PeriodicData(timeSeries[1], 11000));
+        testData.add(new PeriodicData(timeSeries[2], 9000));
+
+        contractManagerGBPUSD = new UnitTestContractManager(contractDetailsGBPUSD, strategyFactory, testData, 60);
+        contractManagerEURUSD = new UnitTestContractManager(contractDetailsEURUSD, strategyFactory, testData, 60);
+        contractManagerGBPUSD.run();
+
+        /* The price drops fast in the third data point, so we should have an
+         * order to go long.
+         */
+        EntryOrder entryOrder = contractManagerGBPUSD.getOrdersFromFlat();
+        Assert.assertNotNull(entryOrder);
+        Assert.assertEquals(OrderAction.BUY, entryOrder.getOrderAction());
+        Assert.assertTrue(entryOrder.shouldTransmit());
+
+        contractManagerEURUSD.run();
+        entryOrder = contractManagerEURUSD.getOrdersFromFlat();
+        System.out.println(entryOrder.toString());
+        Assert.assertFalse(entryOrder.shouldTransmit());
+
+        contractManagerGBPUSD.close();
+        contractManagerEURUSD.close();
+
+    }
+    
     @Test
     public void testThreePeriodShort()
         throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {

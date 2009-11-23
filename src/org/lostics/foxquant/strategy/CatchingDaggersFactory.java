@@ -8,6 +8,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import org.lostics.foxquant.model.ContractManager;
 import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyException;
@@ -22,6 +24,8 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
     public static final int DEFAULT_HISTORICAL_BARS = 120;
     
     public static final double DEFAULT_SPREAD = 2;
+    
+    private static final Logger log = Logger.getLogger(CatchingDaggersFactory.class);
     
     // Synchronize access to 'tradingRequests' on itself
     private final Map<String, TradingRequestQueue> tradingRequests
@@ -122,20 +126,20 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
                 longRequests = new TradingRequestQueue();
                 this.tradingRequests.put(request.longSymbol, longRequests);
             }
+            
             if (null == shortRequests) {
                 shortRequests = new TradingRequestQueue();
                 this.tradingRequests.put(request.shortSymbol, shortRequests);
             }
             
-            if (longRequests.getLongTop() == null &&
-                shortRequests.getShortTop() == null) {
+            okayToGo = longRequests.getLongTop() == null &&
+                shortRequests.getShortTop() == null;
+            if (okayToGo) {
                 longRequests.setLongTop(request);
                 shortRequests.setShortTop(request);
-                okayToGo = true;
             } else {
                 longRequests.addLongRequest(request);
                 shortRequests.addShortRequest(request);
-                okayToGo = false;
             }
         }
         

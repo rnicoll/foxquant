@@ -1,6 +1,8 @@
 // $Id$
 package org.lostics.foxquant.strategy;
 
+import org.apache.log4j.Logger;
+
 import org.lostics.foxquant.model.StrategyException;
 import org.lostics.foxquant.model.Strategy;
 
@@ -8,6 +10,8 @@ import org.lostics.foxquant.model.Strategy;
  * Class for tracking strategies requests' for trading permission.
  */
 public class TradingRequest extends Object {
+    private static final Logger log = Logger.getLogger(TradingRequest.class);
+    
     // We have to use a pair of booleans, rather than an enum, to
     // avoid threading issues (we don't want approval coming through
     // to mess with indications of whether the request is queued).
@@ -82,8 +86,8 @@ public class TradingRequest extends Object {
      * is on the queue, only whether the state has been changed.
      */
     public boolean queueIfInactive()
-        throws StrategyException {
-        if (!this.isQueued) {
+        throws StrategyException {        
+        if (!this.isQueued) {            
             this.isApproved = false;
             this.factory.request(this);
             this.isQueued = true;
