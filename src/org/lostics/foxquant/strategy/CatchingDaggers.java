@@ -431,13 +431,11 @@ public class CatchingDaggers implements Strategy {
         final long timeSinceTraded = now - this.timeExitedMarket;
         
         if (timeSinceTraded < COOLDOWN_PERIOD) {
-            log.debug("Most recent trade completed too recently, still in cooldown period.");
             return null;
         }
         
         if (this.mostRecentAsk == null ||
             this.mostRecentBid == null) {
-            log.debug("No most recent bid/ask to generate entry prices from.");
             // XXX: Should have a countdown timer before we're willing to re-enter the market
             return null;
         }
@@ -505,9 +503,9 @@ public class CatchingDaggers implements Strategy {
         final int fastProfitLimit;
         
         fastProfit = Math.max(fastProfit, getMinimumProfit());
-        this.exitOrdersPool.setLong(this.actualEntryPrice + Math.min(this.targetProfit, fastProfit),
-            this.actualEntryPrice - this.targetProfit);
-        
+        this.exitOrdersPool.setShort(this.actualEntryPrice - Math.min(this.targetProfit, fastProfit),
+            this.actualEntryPrice + this.targetProfit);
+            
         return this.exitOrdersPool;
     }
     
@@ -540,15 +538,20 @@ public class CatchingDaggers implements Strategy {
             } catch(InsufficientDataException e) {
                 throw new StrategyException(e);
             }
+        } else if (status == OrderStatus.Cancelled) {
+            this.longTradeRequest.cancelIfQueued();
+            this.shortTradeRequest.cancelIfQueued();
         }
     }
 
     public void handleExitOrderStatus(final OrderAction action, final boolean isLimitOrder,
         final OrderStatus status, final int filled, final int remaining, final int avgFillPrice)
-        throws StrategyException {
-        this.timeExitedMarket = System.currentTimeMillis();
-        
-        if (0 == remaining) {
+        throws StrategyException {        
+        if (status == OrderStatus.Cancelled ||
+            (status == OrderStatus.Filled &&
+            0 == remaining)) {
+            // XXX: Contract manager should track exit time, as that's MUCH more reliable.
+            this.timeExitedMarket = System.currentTimeMillis();
             this.longTradeRequest.cancelIfQueued();
             this.shortTradeRequest.cancelIfQueued();
         }

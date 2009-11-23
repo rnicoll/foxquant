@@ -581,13 +581,13 @@ public class TWSContractManager extends AbstractContractManager {
             }
         }
         
-        if (this.state == CMState.TARGET_FLAT) {
+        /* if (this.state == CMState.TARGET_FLAT) {
             log.debug("Targetting flat. Order statuses are entry: "
                 + entryOrderStatus + ", limit: "
                 + this.limitProfitOrderWrapper.getStatus() + ", stop: "
                 + this.stopLossOrderWrapper.getStatus() + ". Position = "
                 + this.position);
-        }
+        } */
     }
 
     public boolean handleTick(final TickData tickData)
@@ -629,7 +629,7 @@ public class TWSContractManager extends AbstractContractManager {
                 orderDetails = this.strategy.getOrdersFromFlat();
             } catch(Exception e) {
                 // XXX: Need to check orders cancel okay, and allow for re-activation of the strategy
-                log.error("Caught exception while generating orders from strategy. Cancelling all outstanding orders.",
+                log.fatal("Caught exception while generating orders from strategy. Cancelling all outstanding orders.",
                     e);
                 this.state = CMState.TARGET_FLAT;
                 cancelOrders();
@@ -642,8 +642,9 @@ public class TWSContractManager extends AbstractContractManager {
                 try {
                     database = this.getDBConnection();
                 } catch(DatabaseUnavailableException e) {
-                    log.error("Cannot generate entry orders because I cannot contact the database server. Cancelling all outstanding orders.",
+                    log.fatal("Cannot generate entry orders because I cannot contact the database server. Cancelling all outstanding orders.",
                         e);
+                    this.state = CMState.TARGET_FLAT;
                     // XXX: Exit once flat.
                     return;
                 }
@@ -652,7 +653,7 @@ public class TWSContractManager extends AbstractContractManager {
                     this.placeEntryOrders(database, orderDetails);
                 } catch(Exception e) {
                     // XXX: Need to ensure we're in a stable state of some kind at this point
-                    log.fatal("Error while placing market entry order.");
+                    log.fatal("Error while placing market entry order.", e);
                     this.state = CMState.TARGET_FLAT;
                     cancelOrders();
                     // XXX: Exit once flat.
