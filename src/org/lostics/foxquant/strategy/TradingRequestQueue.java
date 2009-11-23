@@ -59,7 +59,8 @@ class TradingRequestQueue extends Object {
     }
     
     void removeLongRequest(final TradingRequest request) {
-        if (this.topLong.equals(request)) {
+        if (null != this.topLong &&
+            this.topLong.equals(request)) {
             this.topLong = null;
         } else {
             this.queueLong.remove(request);
@@ -67,7 +68,8 @@ class TradingRequestQueue extends Object {
     }
     
     void removeShortRequest(final TradingRequest request) {
-        if (this.topShort.equals(request)) {
+        if (null != this.topShort &&
+            this.topShort.equals(request)) {
             this.topShort = null;
         } else {
             this.queueShort.remove(request);
