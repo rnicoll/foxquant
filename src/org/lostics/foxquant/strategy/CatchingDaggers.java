@@ -86,7 +86,7 @@ public class CatchingDaggers implements Strategy {
      * Ratio of price as minimum expected profit from a trade. Below this
      * there is too high a chance of getting stopped out early.
      */
-    public static final double MIN_PROFIT_MULTIPLIER = 0.00080;
+    public static final double MIN_PROFIT_MULTIPLIER = 0.00060;
     
     /**
      * Ratio of price as maximum expected profit from a trade. Beyond this
