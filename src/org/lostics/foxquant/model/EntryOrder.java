@@ -99,44 +99,14 @@ public class EntryOrder extends Object {
     public void setLong(final int setEntryLimitPrice,
         final int setExitLimitPrice, final int setExitStopPrice,
         final boolean setTransmit) {
+        if (setExitLimitPrice <= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Limit price for exiting a long position must be greater than the entry price.");
+        }
+        if (setExitStopPrice >= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Stop-loss price for exiting a long position must be less than the entry price.");
+        }
+        
         this.orderAction = OrderAction.BUY;
-        this.entryLimitPrice = setEntryLimitPrice;
-        this.exitLimitPrice = setExitLimitPrice;
-        this.exitStopPrice = setExitStopPrice;
-        
-        this.transmit = setTransmit;
-    }
-    
-    /**
-     * Generates an order to go long. Stop-loss price is calculated as being
-     * the same distance from the entry price, as the limit price is. For
-     * example, if the entry price was 20 and the profit limit price 25, the
-     * stop loss price would be 20 - (25 - 20) = 15.
-     *
-     * @param setEntryLimitPrice the maximum price to pay for the asset.
-     * @param setExitLimitPrice the minimum price at which to take the profit.
-     * The stop-loss price is generated using this price.
-     * @param setTransmit whether to enter this order into the market immediately.
-     * This is provides guidance to the contract manager, but does not guarantee
-     * that the order will not be transmitted before it's true, or will be once
-     * is it set true. True to transmit, false not to.
-     */
-    public void setLong(final int setEntryLimitPrice,
-        final int setExitLimitPrice,
-        final boolean setTransmit) {
-        this.orderAction = OrderAction.BUY;
-        this.entryLimitPrice = setEntryLimitPrice;
-        this.exitLimitPrice = setExitLimitPrice;
-        
-        this.exitStopPrice = setEntryLimitPrice - getProfitTarget();
-        
-        this.transmit = setTransmit;
-    }
-    
-    public void setShort(final int setEntryLimitPrice,
-        final int setExitLimitPrice, final int setExitStopPrice,
-        final boolean setTransmit) {
-        this.orderAction = OrderAction.SELL;
         this.entryLimitPrice = setEntryLimitPrice;
         this.exitLimitPrice = setExitLimitPrice;
         this.exitStopPrice = setExitStopPrice;
@@ -145,12 +115,19 @@ public class EntryOrder extends Object {
     }
     
     public void setShort(final int setEntryLimitPrice,
-        final int setExitLimitPrice, final boolean setTransmit) {
+        final int setExitLimitPrice, final int setExitStopPrice,
+        final boolean setTransmit) {
+        if (setExitLimitPrice >= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Limit price for exiting a short position must be less than the entry price.");
+        }
+        if (setExitStopPrice <= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Stop-loss price for exiting a short position must be greater than the entry price.");
+        }
+        
         this.orderAction = OrderAction.SELL;
         this.entryLimitPrice = setEntryLimitPrice;
         this.exitLimitPrice = setExitLimitPrice;
-
-        this.exitStopPrice = setEntryLimitPrice + getProfitTarget();
+        this.exitStopPrice = setExitStopPrice;
         
         this.transmit = setTransmit;
     }
