@@ -89,10 +89,10 @@ final class HistoricDataRequest extends Object implements IQFeedWork {
             final double low = Double.valueOf(parts[2]);
             final double open = Double.valueOf(parts[3]);
             final double close = Double.valueOf(parts[4]);
-            final int fixedHigh = (int)(high / this.contractDetails.m_minTick);
-            final int fixedLow = (int)(low / this.contractDetails.m_minTick);
-            final int fixedOpen = (int)(open / this.contractDetails.m_minTick);
-            final int fixedClose = (int)(close / this.contractDetails.m_minTick);
+            final int fixedHigh = (int)Math.round(high / this.contractDetails.m_minTick);
+            final int fixedLow = (int)Math.round(low / this.contractDetails.m_minTick);
+            final int fixedOpen = (int)Math.round(open / this.contractDetails.m_minTick);
+            final int fixedClose = (int)Math.round(close / this.contractDetails.m_minTick);
             final PeriodicData data;
             
             try {

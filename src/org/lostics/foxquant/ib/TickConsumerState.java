@@ -23,7 +23,7 @@ class TickConsumerState {
         this.tickData.timeMillis = System.currentTimeMillis();
         
         if (newPrice != null) {
-            this.tickData.askPrice = (int)(newPrice / contractManager.getMinimumTick());
+            this.tickData.askPrice = (int)Math.round(newPrice / contractManager.getMinimumTick());
         } else {
             this.tickData.askPrice = null;
         }
@@ -38,7 +38,7 @@ class TickConsumerState {
         this.tickData.timeMillis = System.currentTimeMillis();
         
         if (newPrice != null) {
-            this.tickData.bidPrice = (int)(newPrice / contractManager.getMinimumTick());
+            this.tickData.bidPrice = (int)Math.round(newPrice / contractManager.getMinimumTick());
         } else {
             this.tickData.bidPrice = null;
         }

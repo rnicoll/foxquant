@@ -105,8 +105,8 @@ class BackfillHandler extends Thread implements HistoricalDataConsumer {
             rs = statement.executeQuery();
             while (rs.next()) {
                 final PeriodicData dataBar = new PeriodicData(rs.getTimestamp("BAR_START"),
-                    (int)(rs.getDouble("OPEN") / this.contractManager.getMinimumTick()), (int)(rs.getDouble("HIGH") / this.contractManager.getMinimumTick()),
-                    (int)(rs.getDouble("LOW") / this.contractManager.getMinimumTick()), (int)(rs.getDouble("CLOSE") / this.contractManager.getMinimumTick()));
+                    (int)Math.round(rs.getDouble("OPEN") / this.contractManager.getMinimumTick()), (int)Math.round(rs.getDouble("HIGH") / this.contractManager.getMinimumTick()),
+                    (int)Math.round(rs.getDouble("LOW") / this.contractManager.getMinimumTick()), (int)Math.round(rs.getDouble("CLOSE") / this.contractManager.getMinimumTick()));
 
                 // XXX: Need to actually check if it has gaps
                 this.contractManager.handleHistoricPrice(dataBar, true);
