@@ -281,6 +281,7 @@ public class MainFrame extends JFrame implements WindowListener {
                     javax.swing.SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
                             // I wish we had a way of checking the connection worked.
+                            MainFrame.this.contractsPanel.enableGetContracts();
                             MainFrame.this.disconnectButton.setEnabled(true);
                         }
                     });
@@ -320,7 +321,6 @@ public class MainFrame extends JFrame implements WindowListener {
                         + id + ", "
                         + errorCode + ": "
                         + errorString + "\n");
-                    MainFrame.this.getToolkit().beep();
                 }
             });
         }
@@ -329,7 +329,6 @@ public class MainFrame extends JFrame implements WindowListener {
             javax.swing.SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     MainFrame.this.errorTextArea.append(errorString + "\n");
-                    MainFrame.this.getToolkit().beep();
                 }
             });
         }
@@ -340,7 +339,6 @@ public class MainFrame extends JFrame implements WindowListener {
                     MainFrame.this.errorTextArea.append("Caught exception (see stderr for stacktrace): "
                         + cause.toString() + "\n");
                     cause.printStackTrace(System.err);
-                    MainFrame.this.getToolkit().beep();
                 }
             });
         }

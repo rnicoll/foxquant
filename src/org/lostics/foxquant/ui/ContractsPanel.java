@@ -76,6 +76,7 @@ public class ContractsPanel extends JPanel {
         this.tabbedPane.setPreferredSize(new Dimension(MainFrame.PANEL_WIDTH, 120));
         
         this.contractButton.addActionListener(this.new ContractAction());
+        this.contractButton.setEnabled(false);
 
         this.setName("Contracts");
 
@@ -109,6 +110,14 @@ public class ContractsPanel extends JPanel {
 
     private void addContractPanel(final Contract contract, final javax.swing.JComponent contractPanel) {
         this.tabbedPane.addTab(contract.m_localSymbol, contractPanel);
+    }
+    
+    /**
+     * Enable the "Get Contracts" button, MUST only be called from within the
+     * Swing event thread.
+     */
+    protected void enableGetContracts() {
+        this.contractButton.setEnabled(true);
     }
 
     private class ContractAction extends Object implements ActionListener, ContractDetailsConsumer, ContractManagerConsumer {

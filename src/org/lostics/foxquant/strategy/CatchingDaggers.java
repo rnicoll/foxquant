@@ -173,6 +173,9 @@ public class CatchingDaggers implements Strategy {
 
     private Integer mostRecentBid;
     private Integer mostRecentAsk;
+    private int cancelDistance = 0;
+    private int orderDistance = 0;
+    private int transmitDistance = 0;
     private long mostRecentUpdate = System.currentTimeMillis();
     
     private TFPanel swingPanel = null;
@@ -314,7 +317,6 @@ public class CatchingDaggers implements Strategy {
     
     private EntryOrder generateLongOrder(final int distance)
         throws InsufficientDataException, StrategyException {
-        final int cancelDistance = getCancelDistance();
         final int projectedProfit;
         final boolean transmit;
         
@@ -336,20 +338,20 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        if (distance > cancelDistance) {
+        if (distance > this.cancelDistance) {
             // Too far out, cancel any existing order.
             return null;
         }
         
         if (!this.orderPlaced &&
-            distance > getOrderDistance()) {
+            distance > this.orderDistance) {
             // No pre-existing order, and we're too far out to create a
             // new order, so delete them.
             return null;
         }
         
         this.longTradeRequest.queueIfInactive();
-        transmit = getTransmitDistance() > distance &&
+        transmit = this.transmitDistance > distance &&
             this.longTradeRequest.isApproved();
 
         this.entryOrderPool.setLong(this.actualEntryPrice,
@@ -363,7 +365,6 @@ public class CatchingDaggers implements Strategy {
     
     private EntryOrder generateShortOrder(final int distance)
         throws InsufficientDataException, StrategyException {
-        final int cancelDistance = getCancelDistance();
         final int projectedProfit;
         final boolean transmit;
         
@@ -385,20 +386,20 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        if (distance > cancelDistance) {
+        if (distance > this.cancelDistance) {
             // Too far out, cancel any existing order.
             return null;
         }
         
         if (!this.orderPlaced &&
-            distance > getOrderDistance()) {
+            distance > this.orderDistance) {
             // No pre-existing order, and we're too far out to create a
             // new order, so delete them.
             return null;
         }
         
         this.shortTradeRequest.queueIfInactive();
-        transmit = getTransmitDistance() > distance &&
+        transmit = this.transmitDistance > distance &&
             this.shortTradeRequest.isApproved();
 
         this.entryOrderPool.setShort(this.actualEntryPrice,
@@ -412,6 +413,18 @@ public class CatchingDaggers implements Strategy {
 
     public EntryOrder getOrdersFromFlat()
         throws StrategyException {
+        if (this.mostRecentAsk == null ||
+            this.mostRecentBid == null) {
+            // XXX: Should have a countdown timer before we're willing to re-enter the market
+            return null;
+        }
+        
+        // XXX: These should be calculated on the data input thread, when the bid/ask changes
+        // significantly
+        this.cancelDistance = getCancelDistance();
+        this.orderDistance = getOrderDistance();
+        this.transmitDistance = getTransmitDistance();
+        
         if (this.historicalBars < this.totalHistoricalBars) {
             return null;
         }
@@ -431,12 +444,6 @@ public class CatchingDaggers implements Strategy {
         final long timeSinceTraded = now - this.timeExitedMarket;
         
         if (timeSinceTraded < COOLDOWN_PERIOD) {
-            return null;
-        }
-        
-        if (this.mostRecentAsk == null ||
-            this.mostRecentBid == null) {
-            // XXX: Should have a countdown timer before we're willing to re-enter the market
             return null;
         }
         
@@ -902,9 +909,9 @@ public class CatchingDaggers implements Strategy {
                 this.actualLossLabel.setText("N/A");
             }
             
-            this.cancelDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.getCancelDistance()));
-            this.orderDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.getOrderDistance()));
-            this.transmitDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.getTransmitDistance()));
+            this.cancelDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.cancelDistance));
+            this.orderDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.orderDistance));
+            this.transmitDistanceLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.transmitDistance));
 
             super.paint(g);
         }

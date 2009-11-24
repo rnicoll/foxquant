@@ -178,16 +178,11 @@ class BackfillHandler extends Thread implements HistoricalDataConsumer {
 
                 if (marketClosedDuration >= dataBackfillDuration) {
                     // Has been closed for the entire backfill period, abort.
-                    log.debug("Market has been closed for entire backfill duration, aborting backfill.");
                     this.contractManager.start();
                     this.connectionManager.fireContractManagerReady(this.contractManager);
                     return;
                 }
             }
-            
-            log.info("Backfilling from "
-                + dataStartTime + " to "
-                + dataEndTime);
 
             try {
                 this.connectionManager.getIQFeedGateway().requestHistoricalData(this,
