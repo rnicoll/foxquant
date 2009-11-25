@@ -44,6 +44,16 @@ public interface Strategy {
         throws StrategyException;
 
     /**
+     * Used by the contract manager to indicate its position in the market is
+     * flat. This reflects not just a complete order execution pair, but also
+     * anamlous situations where it cancels the orders. This is useful primarily
+     * to ensure the strategy resets itself, but MUST be safe to call without
+     * orders having executed.
+     */
+    public void handlePositionFlat()
+        throws StrategyException;
+
+    /**
      * @return A price to enter the market at, by limit order. A null return
      * is taken as an instruction to not trade at any value.
      * The strategy runner MUST NOT cache the returned value directly, so

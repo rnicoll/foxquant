@@ -55,13 +55,13 @@ public class CatchingDaggers implements Strategy {
      * Used to ensure it doesn't re-enter immediately after a stop-loss is
      * hit (although should probably wait until the market hits SMA really).
      */
-    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 20;
+    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 30;
     
     /**
      * How long the trader expects to be in the market, for each trade,
      * measured in minutes. Used to generate targetProfitPerMinute.
      */
-    public static final int EXPECTED_TRADE_DURATION_MINUTES = 60;
+    public static final int EXPECTED_TRADE_DURATION_MINUTES = 45;
     
     /**
      * Ratio of price as maximum distance from the entry point before
@@ -147,9 +147,8 @@ public class CatchingDaggers implements Strategy {
      */
     private long timeEnteredMarket = 0;
     
-    /** The time at which the exit order completed filled. Used to handle cool-down.
-     */
-    private long timeExitedMarket = 0;
+    /** Earliest point in time to trade, used by cooldown timers. */
+    private long doNotTradeUntil = 0;
     
     private int actualEntryPrice;
     private int projectedEntryPrice;
@@ -228,6 +227,10 @@ public class CatchingDaggers implements Strategy {
         } catch(InsufficientDataException e) {
             throw new StrategyException(e);
         }
+                
+        this.cancelDistance = getCancelDistance(periodicData.getPrice(PriceType.HIGH_LOW_MEAN));
+        this.orderDistance = getOrderDistance(periodicData.getPrice(PriceType.HIGH_LOW_MEAN));
+        this.transmitDistance = getTransmitDistance(periodicData.getPrice(PriceType.HIGH_LOW_MEAN));
         
         this.historicalBars = this.bidBB.getValueCount();
     }
@@ -238,12 +241,9 @@ public class CatchingDaggers implements Strategy {
      * order is cancelled. See {@link #getOrderDistance()} for the point when a
      * new order is generated.
      */
-    private int getCancelDistance() {
-        // Calculate the minimum profit before we'll trade, based on the mid-point price.
-        double distance = (this.mostRecentAsk + this.mostRecentBid) * CANCEL_DISTANCE_MULTIPLIER / 2.0;
-        
-        // Convert this to a valid price point. Note this uses ceiling, not round.
-        return (int)Math.ceil(distance);
+    private int getCancelDistance(final int midPoint) {
+        // Note this uses ceiling, not round.
+        return (int)Math.ceil(midPoint * CANCEL_DISTANCE_MULTIPLIER);
     }
     
     private int getEntryLong()
@@ -291,24 +291,18 @@ public class CatchingDaggers implements Strategy {
      * Calculate the maxium value distance before an order is submitted to TWS
      * (but not transmitted), between the current bid/ask and the entry price.
      */
-    private int getOrderDistance() {
-        // Calculate the minimum profit before we'll trade, based on the mid-point price.
-        double distance = (this.mostRecentAsk + this.mostRecentBid) * ORDER_DISTANCE_MULTIPLIER / 2.0;
-        
-        // Convert this to a valid price point. Note this uses ceiling, not round.
-        return (int)Math.ceil(distance);
+    private int getOrderDistance(final int midPoint) {
+        // Note this uses ceiling, not round.
+        return (int)Math.ceil(midPoint * ORDER_DISTANCE_MULTIPLIER);
     }
     
     /**
      * Calculate the maximum value distance before an order is transmitted to
      * the exchange, between the current bid/ask and the entry price.
      */
-    private int getTransmitDistance() {
-        // Calculate the minimum profit before we transmit trades to the market, based on the mid-point price.
-        double distance = (this.mostRecentAsk + this.mostRecentBid) * TRANSMIT_DISTANCE_MULTIPLIER / 2.0;
-        
-        // Convert this to a valid price point. Note this uses ceiling, not round.
-        return (int)Math.ceil(distance);
+    private int getTransmitDistance(final int midPoint) {
+        // Note this uses ceiling, not round.
+        return (int)Math.ceil(midPoint * TRANSMIT_DISTANCE_MULTIPLIER);
     }
     
     public void notifyTradingRequestApproved() {
@@ -415,15 +409,9 @@ public class CatchingDaggers implements Strategy {
         throws StrategyException {
         if (this.mostRecentAsk == null ||
             this.mostRecentBid == null) {
-            // XXX: Should have a countdown timer before we're willing to re-enter the market
+            this.doNotTradeUntil = System.currentTimeMillis() + ONE_MINUTE;
             return null;
         }
-        
-        // XXX: These should be calculated on the data input thread, when the bid/ask changes
-        // significantly
-        this.cancelDistance = getCancelDistance();
-        this.orderDistance = getOrderDistance();
-        this.transmitDistance = getTransmitDistance();
         
         if (this.historicalBars < this.totalHistoricalBars) {
             return null;
@@ -441,9 +429,7 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        final long timeSinceTraded = now - this.timeExitedMarket;
-        
-        if (timeSinceTraded < COOLDOWN_PERIOD) {
+        if (this.doNotTradeUntil > now) {
             return null;
         }
         
@@ -553,22 +539,26 @@ public class CatchingDaggers implements Strategy {
 
     public void handleExitOrderStatus(final OrderAction action, final boolean isLimitOrder,
         final OrderStatus status, final int filled, final int remaining, final int avgFillPrice)
-        throws StrategyException {        
+        throws StrategyException {
         if (status == OrderStatus.Cancelled ||
             (status == OrderStatus.Filled &&
             0 == remaining)) {
-            // XXX: Contract manager should track exit time, as that's MUCH more reliable.
-            this.timeExitedMarket = System.currentTimeMillis();
-            this.longTradeRequest.cancelIfQueued();
-            this.shortTradeRequest.cancelIfQueued();
+            this.doNotTradeUntil = System.currentTimeMillis() + COOLDOWN_PERIOD;
+            this.handlePositionFlat();
         }
         
         return;
     }
     
+    public void handlePositionFlat()
+        throws StrategyException {
+        this.longTradeRequest.cancelIfQueued();
+        this.shortTradeRequest.cancelIfQueued();
+    }
+    
     private void handleEntryOrderFilled(final OrderAction action, final int filled,
         final int avgFillPrice)
-        throws InsufficientDataException {
+        throws InsufficientDataException, StrategyException {
         final int actualTradeDistance;
         final int projectedTradeDistance;
         
@@ -621,9 +611,14 @@ public class CatchingDaggers implements Strategy {
         
             this.bidMinuteBar.update(this.mostRecentBid);
             this.askMinuteBar.update(this.mostRecentAsk);
-
+            
             while ((this.mostRecentUpdate - this.bidMinuteBar.startTime.getTime()) > BAR_PERIOD) {
                 final Timestamp barStart = new Timestamp(this.bidMinuteBar.startTime.getTime() + BAR_PERIOD);
+                final int midPoint = (int)Math.round((this.mostRecentBid + this.mostRecentAsk) / 2.0);
+                
+                this.cancelDistance = getCancelDistance(midPoint);
+                this.orderDistance = getOrderDistance(midPoint);
+                this.transmitDistance = getTransmitDistance(midPoint);
         
                 try {
                     this.bidBB.handlePeriodicData(this.bidMinuteBar.getCopy());

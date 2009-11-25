@@ -561,8 +561,17 @@ public class TWSContractManager extends AbstractContractManager {
             if (this.position == 0) {
                 clearOrders();        
                 if (this.state == CMState.TARGET_FLAT) {
+                    try {
+                        this.strategy.handlePositionFlat();
+                    } catch(Exception e) {
+                        log.fatal("Strategy failed to handle notification of position being flat.", e);
+                        
+                        this.state = CMState.TARGET_FLAT;
+                        // XXX: Should indicate no further trades once flat
+                    }
+                    
                     // XXX: Need to handle situations where it's not trading
-                    // afte going flat.
+                    // after going flat.
                     this.state = CMState.TRADING;
                 }
             } else {
@@ -577,19 +586,20 @@ public class TWSContractManager extends AbstractContractManager {
             this.stopLossOrderWrapper.getStatus() == OrderStatus.PendingSubmit) {
             clearOrders();
             if (this.state == CMState.TARGET_FLAT) {
+                try {
+                    this.strategy.handlePositionFlat();
+                } catch(Exception e) {
+                    log.fatal("Strategy failed to handle notification of position being flat.", e);
+                    
+                    this.state = CMState.TARGET_FLAT;
+                    // XXX: Should indicate no further trades once flat
+                }
+                
                 // XXX: Need to handle situations where it's not trading
-                // afte going flat.
+                // after going flat.
                 this.state = CMState.TRADING;
             }
         }
-        
-        /* if (this.state == CMState.TARGET_FLAT) {
-            log.debug("Targetting flat. Order statuses are entry: "
-                + entryOrderStatus + ", limit: "
-                + this.limitProfitOrderWrapper.getStatus() + ", stop: "
-                + this.stopLossOrderWrapper.getStatus() + ". Position = "
-                + this.position);
-        } */
     }
 
     public boolean handleTick(final TickData tickData)
