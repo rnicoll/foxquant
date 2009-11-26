@@ -694,6 +694,8 @@ public class CatchingDaggers implements Strategy {
         // Not thread safe, must only be called from the Swing event dispatcher
         private DateFormat updateFormat = new SimpleDateFormat("HH:mm:ss");
         
+        private final CatchingDaggersDisplay cdDisplay = new CatchingDaggersDisplay();
+        
         private final JLabel askPriceLabel = new JLabel("N/A");
         private final JLabel bidPriceLabel = new JLabel("N/A");
         private final JLabel mostRecentUpdateLabel = new JLabel();
@@ -740,6 +742,8 @@ public class CatchingDaggers implements Strategy {
             this.transmitDistanceLabel.setBorder(border);
             
             this.setLayout(layout);
+            this.add(cdDisplay);
+            
             this.add(new JLabel("Bid price"));
             this.add(this.bidPriceLabel);
             this.add(new JLabel("Ask price"));
@@ -778,7 +782,7 @@ public class CatchingDaggers implements Strategy {
 
             // Set all the components to the same size
             for (int i = 0; i < totalComponents; i++) {
-                SpringLayout.Constraints constraints = layout.getConstraints(this.getComponent(i));
+                SpringLayout.Constraints constraints = layout.getConstraints(this.getComponent(i + 1));
 
                 constraints.setWidth(maxWidthSpring);
                 constraints.setHeight(maxHeightSpring);
@@ -786,15 +790,24 @@ public class CatchingDaggers implements Strategy {
 
             // Align the components into a grid.
             
+            layout.putConstraint(SpringLayout.WEST, this.cdDisplay, 5,
+                SpringLayout.WEST, this);
+            layout.putConstraint(SpringLayout.NORTH, this.cdDisplay, 5,
+                SpringLayout.NORTH, this);
+            layout.putConstraint(SpringLayout.EAST, this.cdDisplay, -5,
+                SpringLayout.EAST, this);
+            layout.putConstraint(SpringLayout.SOUTH, this.cdDisplay, this.cdDisplay.getHeight(),
+                SpringLayout.NORTH, this.cdDisplay);
+            
             // We'll need the bottom-right constraint later, for setting the
             // size of the panel.
-            SpringLayout.Constraints bottomRightConstraint = null;
+            SpringLayout.Constraints bottomRightConstraint = layout.getConstraints(this.getComponent(0));
             
             for (int rowIdx = 0; rowIdx < ROWS; rowIdx++) {
                 final SpringLayout.Constraints previousEndRowConstraint = bottomRightConstraint;
                 
                 for (int colIdx = 0; colIdx < COLUMNS; colIdx++) {
-                    final SpringLayout.Constraints constraints = layout.getConstraints(this.getComponent((COLUMNS * rowIdx) + colIdx));
+                    final SpringLayout.Constraints constraints = layout.getConstraints(this.getComponent((COLUMNS * rowIdx) + colIdx + 1));
                     
                     if (colIdx == 0) {
                         constraints.setX(xInterColumnSpring);
@@ -808,12 +821,12 @@ public class CatchingDaggers implements Strategy {
                         }
                     }
 
-                    if (rowIdx == 0) {
-                        constraints.setY(yInterColumnSpring);
-                    } else {
+                    //if (rowIdx == 0) {
+                    //    constraints.setY(yInterColumnSpring);
+                    //} else {
                         constraints.setY(Spring.sum(previousEndRowConstraint.getConstraint(SpringLayout.SOUTH),
                             yInterColumnSpring));
-                    }
+                    //}
                     bottomRightConstraint = constraints;
                 }
             }
