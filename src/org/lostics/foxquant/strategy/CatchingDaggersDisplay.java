@@ -91,9 +91,9 @@ public class CatchingDaggersDisplay extends JComponent {
         final int blueStart = width / 4;
         
         for (int xOffset = 0; xOffset < width; xOffset++) {
-            final int red = Math.max(0, 255 - (255 * xOffset / redEnd));
-            final int blue = Math.max(0, (255 * (xOffset - blueStart)) / redEnd);
-            final Color color = new Color(red, 0, blue);
+            final int red = Math.max(30, 30 + 160 - (160 * xOffset / redEnd));
+            final int blue = Math.max(30, 30 + (160 * (xOffset - blueStart)) / redEnd);
+            final Color color = new Color(red, 20, blue);
             
             g.setColor(color);
             g.drawLine(x + xOffset, y, x + xOffset, y + height);
@@ -105,7 +105,7 @@ public class CatchingDaggersDisplay extends JComponent {
             final int minPrice;
             final int priceRange;
             final int top;
-            final int bottom;
+            final int barHeight;
             final int mid;
             final int askOffset;
             final int bidOffset;
@@ -121,16 +121,16 @@ public class CatchingDaggersDisplay extends JComponent {
                 
                 priceRange = maxPrice - minPrice;
                 top = (int)Math.round(this.getHeight() / 3.0);
-                bottom = this.getHeight() - top;
+                barHeight = this.getHeight() - (top * 2);
                 mid = (int)Math.round(this.getHeight() / 2.0);
                 askOffset = (maxPrice - this.lastAsk) * this.getWidth() / priceRange;
                 bidOffset = (priceRange - this.lastBid + minPrice) * this.getWidth() / priceRange;
             }
             
             g.setColor(Color.BLACK);
-            g.drawLine(askOffset, mid, bidOffset, mid);
-            g.drawLine(askOffset, top, askOffset, bottom);
-            g.drawLine(bidOffset, top, bidOffset, bottom);
+            g.fillRect(askOffset, mid - 1, bidOffset - askOffset, 3);
+            g.fillRect(askOffset, top, 2, barHeight);
+            g.fillRect(bidOffset - 2, top, 2, barHeight);
         }
     }
 }
