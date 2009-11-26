@@ -82,25 +82,29 @@ public class CatchingDaggersFactory implements StrategyFactory<CatchingDaggers> 
             longRequests.removeLongRequest(request);
             shortRequests.removeShortRequest(request);
             
-            for (TradingRequest currentRequest: longRequests.getLongQueue()) {
-                final String blockingSymbol = currentRequest.shortSymbol;
-                final TradingRequestQueue blockingQueue = this.tradingRequests.get(blockingSymbol);
+            if (longRequests.getLongTop() == null) {
+                for (TradingRequest currentRequest: longRequests.getLongQueue()) {
+                    final String blockingSymbol = currentRequest.shortSymbol;
+                    final TradingRequestQueue blockingQueue = this.tradingRequests.get(blockingSymbol);
                 
-                if (blockingQueue.getShortTop() == null) {
-                    longRequests.setLongTop(currentRequest);
-                    blockingQueue.setShortTop(currentRequest);
-                    break;
+                    if (blockingQueue.getShortTop() == null) {
+                        longRequests.setLongTop(currentRequest);
+                        blockingQueue.setShortTop(currentRequest);
+                        break;
+                    }
                 }
             }
             
-            for (TradingRequest currentRequest: shortRequests.getShortQueue()) {
-                final String blockingSymbol = currentRequest.longSymbol;
-                final TradingRequestQueue blockingQueue = this.tradingRequests.get(blockingSymbol);
-                
-                if (blockingQueue.getLongTop() == null) {
-                    shortRequests.setShortTop(currentRequest);
-                    blockingQueue.setLongTop(currentRequest);
-                    break;
+            if (shortRequests.getShortTop() == null) {
+                for (TradingRequest currentRequest: shortRequests.getShortQueue()) {
+                    final String blockingSymbol = currentRequest.longSymbol;
+                    final TradingRequestQueue blockingQueue = this.tradingRequests.get(blockingSymbol);
+                    
+                    if (blockingQueue.getLongTop() == null) {
+                        shortRequests.setShortTop(currentRequest);
+                        blockingQueue.setLongTop(currentRequest);
+                        break;
+                    }
                 }
             }
         }
