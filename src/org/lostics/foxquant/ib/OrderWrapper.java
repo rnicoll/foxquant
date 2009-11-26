@@ -63,9 +63,11 @@ class OrderWrapper extends Object {
         if (this.type == OrderType.STP) {
             order.m_lmtPrice = 0.00000;
             order.m_auxPrice = this.price * getMinimumTick();
+            order.m_triggerMethod = ConnectionManager.TRIGGER_METHOD_DOUBLE_BID_ASK;
         } else {
             order.m_lmtPrice = this.price * getMinimumTick();
             order.m_auxPrice = 0.00000;
+            order.m_triggerMethod = ConnectionManager.TRIGGER_METHOD_DEFAULT;
         }
         order.m_tif = TimeInForce.DAY.toString();
         order.m_transmit = false;

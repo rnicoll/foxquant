@@ -81,6 +81,14 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
 
     /** The delay to put between each historical data request. */
     public static final int    HISTORICAL_DATA_REQUEST_PACING = 20000;
+    
+    public static final int TRIGGER_METHOD_DEFAULT = 0;
+    public static final int TRIGGER_METHOD_DOUBLE_BID_ASK = 1;
+    public static final int TRIGGER_METHOD_LAST = 2;
+    public static final int TRIGGER_METHOD_DOUBLE_LAST = 3;
+    public static final int TRIGGER_METHOD_BID_ASK = 4;
+    public static final int TRIGGER_METHOD_LAST_BID_ASK = 7;
+    public static final int TRIGGER_METHOD_MID_POINT = 8;
 
     public static final String TICKER_TYPE_BID = "BID";
     public static final String TICKER_TYPE_MIDPOINT = "MIDPOINT";
