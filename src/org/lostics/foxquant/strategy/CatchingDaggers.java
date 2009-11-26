@@ -683,6 +683,10 @@ public class CatchingDaggers implements Strategy {
     
     public void updateSwingComponent() {
         if (null != this.swingPanel) {
+            this.swingPanel.getDisplay().update(this.mostRecentBid,
+                this.mostRecentAsk, this.orderPlaced
+                    ? this.entryOrderPool
+                    : null);
             this.swingPanel.repaint();
         }
     }
@@ -849,6 +853,10 @@ public class CatchingDaggers implements Strategy {
             return Integer.toString(hours) + ":"
                 + minutes + ":"
                 + seconds;
+        }
+        
+        protected CatchingDaggersDisplay getDisplay() {
+            return this.cdDisplay;
         }
         
         // XXX: This was a lousy idea that mangles the entire error handling ability of
