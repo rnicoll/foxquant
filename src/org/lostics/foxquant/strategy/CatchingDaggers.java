@@ -61,7 +61,7 @@ public class CatchingDaggers implements Strategy {
      * How long the trader expects to be in the market, for each trade,
      * measured in minutes. Used to generate targetProfitPerMinute.
      */
-    public static final int EXPECTED_TRADE_DURATION_MINUTES = 45;
+    // public static final int EXPECTED_TRADE_DURATION_MINUTES = 45;
     
     /**
      * Ratio of price as maximum distance from the entry point before
@@ -168,7 +168,7 @@ public class CatchingDaggers implements Strategy {
      * exactly EXPECTED_TRADE_DURATION_MINUTES minutes. Stored in minutes
      * for precision reasons.
      */
-    private int targetProfitPerMinute;
+    // private int targetProfitPerMinute;
 
     private Integer mostRecentBid;
     private Integer mostRecentAsk;
@@ -469,12 +469,13 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        final int minutesInTrade = (int)Math.round((System.currentTimeMillis() - this.timeEnteredMarket) / 60000.0);
+        /* final int minutesInTrade = (int)Math.round((System.currentTimeMillis() - this.timeEnteredMarket) / 60000.0);
         int fastProfit = this.targetProfitPerMinute * minutesInTrade * 2;
         final int fastProfitLimit;
         
-        fastProfit = Math.max(fastProfit, getMinimumProfit());
-        this.exitOrdersPool.setLong(this.actualEntryPrice + Math.min(this.targetProfit, fastProfit),
+        fastProfit = Math.max(fastProfit, getMinimumProfit()); */
+        
+        this.exitOrdersPool.setLong(this.actualEntryPrice + this.targetProfit,
             this.actualEntryPrice - this.targetProfit);
         
         return this.exitOrdersPool;
@@ -491,12 +492,12 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        final int minutesInTrade = (int)Math.round((System.currentTimeMillis() - this.timeEnteredMarket) / 60000.0);
+        /* final int minutesInTrade = (int)Math.round((System.currentTimeMillis() - this.timeEnteredMarket) / 60000.0);
         int fastProfit = this.targetProfitPerMinute * minutesInTrade * 2;
         final int fastProfitLimit;
         
-        fastProfit = Math.max(fastProfit, getMinimumProfit());
-        this.exitOrdersPool.setShort(this.actualEntryPrice - Math.min(this.targetProfit, fastProfit),
+        fastProfit = Math.max(fastProfit, getMinimumProfit()); */
+        this.exitOrdersPool.setShort(this.actualEntryPrice - this.targetProfit,
             this.actualEntryPrice + this.targetProfit);
             
         return this.exitOrdersPool;
@@ -575,7 +576,7 @@ public class CatchingDaggers implements Strategy {
         
         // Profit target is a multiple of trade distance
         this.targetProfit = (int)Math.round(actualTradeDistance * PROFIT_TARGET_MULTIPLIER);
-        this.targetProfitPerMinute = (int)Math.ceil(this.targetProfit / EXPECTED_TRADE_DURATION_MINUTES);
+        // this.targetProfitPerMinute = (int)Math.ceil(this.targetProfit / EXPECTED_TRADE_DURATION_MINUTES);
     }
 
     public void handleTick(final TickData[] tickData)
