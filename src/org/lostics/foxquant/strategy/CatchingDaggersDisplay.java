@@ -10,12 +10,24 @@ import javax.swing.JComponent;
 import org.apache.log4j.Logger;
 
 import org.lostics.foxquant.model.EntryOrder;
+import org.lostics.foxquant.util.PriceTimeFrameBuffer;
 
 public class CatchingDaggersDisplay extends JComponent {
     public static final Dimension MINIMUM_SIZE = new Dimension(300, 24);
     public static final Dimension PREFERRED_SIZE = new Dimension(800, 36);
     
+    // Track mean maximum price over 5 second intervals, looking back 60
+    // intervals (5 minutes).
+    private PriceTimeFrameBuffer maxPrices = new PriceTimeFrameBuffer(5000, 60);
+    // Track mean minimum price over 5 second intervals, looking back 60
+    // intervals (5 minutes).
+    private PriceTimeFrameBuffer minPrices = new PriceTimeFrameBuffer(5000, 60);
+    
     private boolean validPrices = false;
+    
+    // Highest and lowest price seen in the latest data
+    private HighLowPrice highLowPrices = new HighLowPrice();
+    
     private int lastBid;
     private int lastAsk;
     
@@ -31,17 +43,24 @@ public class CatchingDaggersDisplay extends JComponent {
         this.setSize(PREFERRED_SIZE);
     }
     
-    protected void update(final Integer bid, final Integer ask, final EntryOrder entryOrder) {
+    protected void update(final long currentTime,
+        final Integer bid, final Integer ask, final EntryOrder entryOrder) {
         boolean needRepaint = false;
         
-        synchronized(this) {
+        synchronized(this) {            
+            this.highLowPrices.reset();
+        
             if (null != bid &&
                 null != ask) {
                 if (this.lastBid != bid) {
+                    this.highLowPrices.addPrice(bid);
+                    
                     this.lastBid = bid;
                     needRepaint = true;
                 }
                 if (this.lastAsk != ask) {
+                    this.highLowPrices.addPrice(ask);
+                    
                     this.lastAsk = ask;
                     needRepaint = true;
                 }
@@ -56,6 +75,13 @@ public class CatchingDaggersDisplay extends JComponent {
                     needRepaint = true;
                 }
                 
+                // Sure, we shouldn't ever see an extreme entry price, but
+                // best to be sure
+                this.highLowPrices.addPrice(entryOrder.getEntryLimitPrice());
+                
+                this.highLowPrices.addPrice(entryOrder.getExitLimitPrice());
+                this.highLowPrices.addPrice(entryOrder.getExitStopPrice());
+                    
                 if (this.entryPrice != entryOrder.getEntryLimitPrice()) {
                     this.entryPrice = entryOrder.getEntryLimitPrice();
                     needRepaint = true;
@@ -72,6 +98,13 @@ public class CatchingDaggersDisplay extends JComponent {
                 this.validOrder = true;
             } else {
                 this.validOrder = false;
+            }
+            
+            if (this.highLowPrices.isHighPriceValid()) {
+                this.maxPrices.add(currentTime, this.highLowPrices.getHighPrice());
+            }
+            if (this.highLowPrices.isLowPriceValid()) {
+                this.minPrices.add(currentTime, this.highLowPrices.getLowPrice());
             }
         }
         
@@ -131,6 +164,49 @@ public class CatchingDaggersDisplay extends JComponent {
             g.fillRect(askOffset, mid - 1, bidOffset - askOffset, 3);
             g.fillRect(askOffset, top, 2, barHeight);
             g.fillRect(bidOffset - 2, top, 2, barHeight);
+        }
+    }
+    
+    private static class HighLowPrice extends Object {
+        private int lowPrice;
+        private boolean lowPriceValid;
+        private int highPrice;
+        private boolean highPriceValid;
+        
+        private         HighLowPrice() {
+            reset();
+        }
+        
+        private void addPrice(final int price) {
+            if (!this.lowPriceValid ||
+                price < this.lowPrice) {
+                this.lowPrice = price;
+            }
+            if (!this.highPriceValid ||
+                price > this.highPrice) {
+                this.highPrice = price;
+            }
+        }
+        
+        private boolean isHighPriceValid() {
+            return this.highPriceValid;
+        }
+        
+        private boolean isLowPriceValid() {
+            return this.lowPriceValid;
+        }
+        
+        private int getHighPrice() {
+            return this.highPrice;
+        }
+        
+        private int getLowPrice() {
+            return this.lowPrice;
+        }
+        
+        private void reset() {
+            this.lowPriceValid = false;
+            this.highPriceValid = false;
         }
     }
 }
