@@ -553,6 +553,7 @@ public class CatchingDaggers implements Strategy {
     
     public void handlePositionFlat()
         throws StrategyException {
+        this.orderPlaced = false;
         this.longTradeRequest.cancelIfQueued();
         this.shortTradeRequest.cancelIfQueued();
     }
