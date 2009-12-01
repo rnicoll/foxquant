@@ -100,10 +100,8 @@ public class CatchingDaggersDisplay extends JComponent {
                 this.validOrder = false;
             }
             
-            if (this.highLowPrices.isHighPriceValid()) {
+            if (this.highLowPrices.arePricesValid()) {
                 this.maxPrices.add(currentTime, this.highLowPrices.getHighPrice());
-            }
-            if (this.highLowPrices.isLowPriceValid()) {
                 this.minPrices.add(currentTime, this.highLowPrices.getLowPrice());
             }
         }
@@ -144,13 +142,9 @@ public class CatchingDaggersDisplay extends JComponent {
             final int bidOffset;
             
             synchronized(this) {
-                if (this.orderIsLong) {
-                    maxPrice = Math.max(this.lastAsk, this.exitLimitPrice);
-                    minPrice = Math.min(this.lastBid, this.exitStopPrice);
-                } else {
-                    maxPrice = Math.max(this.lastAsk, this.exitStopPrice);
-                    minPrice = Math.min(this.lastBid, this.exitLimitPrice);
-                }
+                // Get the highest of the recent prices, and the absolute most recent set
+                maxPrice = Math.max(this.maxPrices.getHigh(), this.highLowPrices.getHighPrice());
+                minPrice = Math.min(this.minPrices.getLow(), this.highLowPrices.getLowPrice());
                 
                 priceRange = maxPrice - minPrice;
                 top = (int)Math.round(this.getHeight() / 3.0);
@@ -169,31 +163,30 @@ public class CatchingDaggersDisplay extends JComponent {
     
     private static class HighLowPrice extends Object {
         private int lowPrice;
-        private boolean lowPriceValid;
         private int highPrice;
-        private boolean highPriceValid;
+        private boolean pricesValid;
         
         private         HighLowPrice() {
             reset();
         }
         
         private void addPrice(final int price) {
-            if (!this.lowPriceValid ||
-                price < this.lowPrice) {
+            if (!this.pricesValid) {
                 this.lowPrice = price;
-            }
-            if (!this.highPriceValid ||
-                price > this.highPrice) {
                 this.highPrice = price;
+                this.pricesValid = true;
+            } else {
+                if (price < this.lowPrice) {
+                    this.lowPrice = price;
+                }
+                if (price > this.highPrice) {
+                    this.highPrice = price;
+                }
             }
         }
         
-        private boolean isHighPriceValid() {
-            return this.highPriceValid;
-        }
-        
-        private boolean isLowPriceValid() {
-            return this.lowPriceValid;
+        private boolean arePricesValid() {
+            return this.pricesValid;
         }
         
         private int getHighPrice() {
@@ -205,8 +198,7 @@ public class CatchingDaggersDisplay extends JComponent {
         }
         
         private void reset() {
-            this.lowPriceValid = false;
-            this.highPriceValid = false;
+            this.pricesValid = false;
         }
     }
 }
