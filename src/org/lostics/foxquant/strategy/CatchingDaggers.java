@@ -150,8 +150,7 @@ public class CatchingDaggers implements Strategy {
     /** Earliest point in time to trade, used by cooldown timers. */
     private long doNotTradeUntil = 0;
     
-    private int actualEntryPrice;
-    private int projectedEntryPrice;
+    private int entryPrice;
     private int actualExitLimitPrice;
     private int projectedExitLimitPrice;
     private int actualExitStopPrice;
@@ -311,25 +310,28 @@ public class CatchingDaggers implements Strategy {
     
     private EntryOrder generateLongOrder(final int distance)
         throws InsufficientDataException, StrategyException {
-        final int projectedProfit;
+        final int projectedEntryPrice = this.getEntryLong();
         final boolean transmit;
         
         // Go long
-        this.projectedEntryPrice = this.getEntryLong();
-        this.actualEntryPrice = Math.min(this.mostRecentAsk, this.projectedEntryPrice);
+        this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
         
         // We're closer to going long, so we want to get the distance from
         // the SMA down to the entry price.
-        this.targetProfit = (int)Math.ceil((this.getExitLong() - this.actualEntryPrice) * PROFIT_TARGET_MULTIPLIER);
+        this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
         
-        this.projectedExitLimitPrice = this.actualEntryPrice + this.targetProfit;
-        this.projectedExitStopPrice = this.actualEntryPrice - this.targetProfit;
+        this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
+        this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
-        projectedProfit = (int)Math.ceil((this.getExitLong() - this.projectedEntryPrice) * PROFIT_TARGET_MULTIPLIER);
-        if (projectedProfit < getMinimumProfit()) {
-            return null;
+        {
+            // Embedded in a separate section to ensure this naive profit
+            // target can't be accidentally re-used
+            final int projectedProfit = (int)Math.ceil((this.getExitLong() - projectedEntryPrice) * PROFIT_TARGET_MULTIPLIER);
+            if (projectedProfit < getMinimumProfit()) {
+                return null;
+            }
         }
         
         if (distance > this.cancelDistance) {
@@ -348,7 +350,7 @@ public class CatchingDaggers implements Strategy {
         transmit = this.transmitDistance > distance &&
             this.longTradeRequest.isApproved();
 
-        this.entryOrderPool.setLong(this.actualEntryPrice,
+        this.entryOrderPool.setLong(this.entryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
             transmit);
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
@@ -359,25 +361,28 @@ public class CatchingDaggers implements Strategy {
     
     private EntryOrder generateShortOrder(final int distance)
         throws InsufficientDataException, StrategyException {
-        final int projectedProfit;
+        final int projectedEntryPrice = this.getEntryShort();
         final boolean transmit;
         
         // Go short
-        this.projectedEntryPrice = this.getEntryShort();
-        this.actualEntryPrice = Math.max(this.mostRecentBid, this.projectedEntryPrice);
+        this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
         
         // We're closer to going short, so we want to get the distance from
         // the entry price down to the SMA.
-        this.targetProfit = (int)Math.ceil((this.actualEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+        this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
         
-        this.projectedExitLimitPrice = this.actualEntryPrice - this.targetProfit;
-        this.projectedExitStopPrice = this.actualEntryPrice + this.targetProfit;
+        this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
+        this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
-        projectedProfit = (int)Math.ceil((this.projectedEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
-        if (projectedProfit < getMinimumProfit()) {
-            return null;
+        {
+            // Embedded in a separate section to ensure this naive profit
+            // target can't be accidentally re-used
+            final int projectedProfit = (int)Math.ceil((projectedEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+            if (projectedProfit < getMinimumProfit()) {
+                return null;
+            }
         }
         
         if (distance > this.cancelDistance) {
@@ -396,7 +401,7 @@ public class CatchingDaggers implements Strategy {
         transmit = this.transmitDistance > distance &&
             this.shortTradeRequest.isApproved();
 
-        this.entryOrderPool.setShort(this.actualEntryPrice,
+        this.entryOrderPool.setShort(this.entryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
             transmit);
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
@@ -475,8 +480,8 @@ public class CatchingDaggers implements Strategy {
         
         fastProfit = Math.max(fastProfit, getMinimumProfit()); */
         
-        this.exitOrdersPool.setLong(this.actualEntryPrice + this.targetProfit,
-            this.actualEntryPrice - this.targetProfit);
+        this.exitOrdersPool.setLong(this.entryPrice + this.targetProfit,
+            this.entryPrice - this.targetProfit);
         
         return this.exitOrdersPool;
     }
@@ -497,8 +502,8 @@ public class CatchingDaggers implements Strategy {
         final int fastProfitLimit;
         
         fastProfit = Math.max(fastProfit, getMinimumProfit()); */
-        this.exitOrdersPool.setShort(this.actualEntryPrice - this.targetProfit,
-            this.actualEntryPrice + this.targetProfit);
+        this.exitOrdersPool.setShort(this.entryPrice - this.targetProfit,
+            this.entryPrice + this.targetProfit);
             
         return this.exitOrdersPool;
     }
@@ -562,17 +567,14 @@ public class CatchingDaggers implements Strategy {
         final int avgFillPrice)
         throws InsufficientDataException, StrategyException {
         final int actualTradeDistance;
-        final int projectedTradeDistance;
         
         this.timeEnteredMarket = System.currentTimeMillis();
-        this.actualEntryPrice = avgFillPrice;
+        this.entryPrice = avgFillPrice;
         
-        if (action == OrderAction.BUY) {            
-            projectedTradeDistance = this.getExitLong() - this.projectedEntryPrice;
-            actualTradeDistance = this.getExitLong() - this.actualEntryPrice;
-        } else {            
-            projectedTradeDistance = this.projectedEntryPrice - this.getExitShort();
-            actualTradeDistance = this.actualEntryPrice - this.getExitShort();
+        if (action == OrderAction.BUY) {
+            actualTradeDistance = this.getExitLong() - this.entryPrice;
+        } else {
+            actualTradeDistance = this.entryPrice - this.getExitShort();
         }
         
         // Profit target is a multiple of trade distance
@@ -904,7 +906,7 @@ public class CatchingDaggers implements Strategy {
                     this.longShortLabel.setText("Short");
                 }
 
-                this.actualEntryLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedEntryPrice));
+                this.actualEntryLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.entryPrice));
                 this.actualProfitLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitLimitPrice));
                 this.actualLossLabel.setText(contractManager.formatTicksAsPrice(CatchingDaggers.this.projectedExitStopPrice));
             } else {
