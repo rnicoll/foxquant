@@ -628,14 +628,14 @@ public class CatchingDaggers implements Strategy {
                 } catch(InsufficientDataException e) {
                     throw new StrategyException(e);
                 }
-                this.historicalBars++;
+                this.historicalBars = this.bidBB.getValueCount();
 
                 this.bidMinuteBar.startNewBar(this.mostRecentBid);
                 this.bidMinuteBar.startTime = new java.sql.Timestamp(this.bidMinuteBar.startTime.getTime() + BAR_PERIOD);
                 this.askMinuteBar.startNewBar(this.mostRecentAsk);
                 this.askMinuteBar.startTime = this.bidMinuteBar.startTime;
             
-                if (this.historicalBars > this.totalHistoricalBars &&
+                if (this.historicalBars >= this.totalHistoricalBars &&
                     null != this.configuration) {
                     try {
                         logStateInDB(this.bidMinuteBar.startTime);
