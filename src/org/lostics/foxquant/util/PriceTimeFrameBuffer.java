@@ -40,10 +40,12 @@ public class PriceTimeFrameBuffer extends Object {
             
             while (intervalPassed > this.shortInterval) {
                 if (this.intervalsFilled < this.intervals.length) {
+                    this.intervals[this.intervalsFilled] = this.currentBar;
                     this.intervalsFilled++;
+                } else {
+                    this.intervals[this.intervalsOffset] = this.currentBar;
+                    this.intervalsOffset = (this.intervalsOffset + 1) % this.intervals.length;
                 }
-                this.intervalsOffset = (this.intervalsOffset + 1) % this.intervals.length;
-                this.intervals[this.intervalsOffset] = this.currentBar;
             
                 this.currentBarStartTime += this.shortInterval;
                 intervalPassed = currentTime - this.currentBarStartTime;

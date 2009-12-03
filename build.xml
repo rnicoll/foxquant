@@ -152,6 +152,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       <test name="org.lostics.foxquant.model.PeriodicDataTest" />
       <test name="org.lostics.foxquant.strategy.CatchingDaggersTest" />
       <test name="org.lostics.foxquant.util.ConcurrentQueueMapTest" />
+      <test name="org.lostics.foxquant.util.PriceTimeFrameBufferTest" />
       <formatter type="plain" usefile="false" />
       <classpath refid="run.classpath" />
     </junit>
