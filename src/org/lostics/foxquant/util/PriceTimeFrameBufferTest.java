@@ -37,7 +37,7 @@ public class PriceTimeFrameBufferTest extends Object {
     }
     
     @Test
-    public void testFourDatapoint() {
+    public void testEightDatapoint() {
         final long baseTime = System.currentTimeMillis();
         final PriceTimeFrameBuffer buffer = new PriceTimeFrameBuffer(1000, 5);
         
@@ -51,5 +51,20 @@ public class PriceTimeFrameBufferTest extends Object {
         buffer.add(baseTime + 2005, 4);
         Assert.assertEquals(6, buffer.getHigh());
         Assert.assertEquals(4, buffer.getLow());
+        buffer.add(baseTime + 3005, 3);
+        Assert.assertEquals(6, buffer.getHigh());
+        Assert.assertEquals(3, buffer.getLow());
+        buffer.add(baseTime + 4005, 5);
+        Assert.assertEquals(6, buffer.getHigh());
+        Assert.assertEquals(3, buffer.getLow());
+        buffer.add(baseTime + 5005, 8);
+        Assert.assertEquals(8, buffer.getHigh());
+        Assert.assertEquals(3, buffer.getLow());
+        buffer.add(baseTime + 5050, 2);
+        Assert.assertEquals(6, buffer.getHigh());
+        Assert.assertEquals(3, buffer.getLow());
+        buffer.add(baseTime + 6005, 10);
+        Assert.assertEquals(10, buffer.getHigh());
+        Assert.assertEquals(3, buffer.getLow());
     }
 }
