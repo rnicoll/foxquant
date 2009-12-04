@@ -176,8 +176,8 @@ public class CatchingDaggersTest extends Object {
         Assert.assertEquals(OrderAction.BUY, entryOrder.getOrderAction());
         Assert.assertEquals(9950, entryOrder.getEntryLimitPrice());
         // XXX: Need to manually check this number
-        Assert.assertEquals(9988, entryOrder.getExitLimitPrice());
-        Assert.assertEquals(9912, entryOrder.getExitStopPrice());
+        Assert.assertEquals(9983, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(9917, entryOrder.getExitStopPrice());
     }
     
     /**
@@ -196,8 +196,8 @@ public class CatchingDaggersTest extends Object {
         final Timestamp[] timeSeries = TestUtils.generateTimeSeries(3, now, 60000);
         final List<PeriodicData> testData = new ArrayList<PeriodicData>();
 
-        testData.add(new PeriodicData(timeSeries[0], 10020));
-        testData.add(new PeriodicData(timeSeries[1], 10010));
+        testData.add(new PeriodicData(timeSeries[0], 10030));
+        testData.add(new PeriodicData(timeSeries[1], 10015));
         testData.add(new PeriodicData(timeSeries[2], 9990));
 
         contractManagerGBPUSD = new UnitTestContractManager(contractDetailsGBPUSD, strategyFactory, testData, 60);
@@ -247,7 +247,7 @@ public class CatchingDaggersTest extends Object {
 
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
         Assert.assertEquals(10120, entryOrder.getEntryLimitPrice());
-        Assert.assertEquals(10099, entryOrder.getExitLimitPrice());
-        Assert.assertEquals(10141, entryOrder.getExitStopPrice());
+        Assert.assertEquals(10102, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(10138, entryOrder.getExitStopPrice());
     }
 }

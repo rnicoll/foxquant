@@ -99,7 +99,7 @@ public class CatchingDaggers implements Strategy {
      * Ratio of the distance between upper/lower band and the SMA, to expect
      * as profit from a trade.
      */
-    public static final double PROFIT_TARGET_MULTIPLIER = 0.75;
+    public static final double PROFIT_TARGET_MULTIPLIER = 0.66;
  
     /** Close out all positions 6 minutes before the market closes. */
     private static final int MARKET_CLOSE_HARD_STOP = 6 * 60 * 1000;
