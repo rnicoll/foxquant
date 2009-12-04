@@ -71,10 +71,10 @@ public class CatchingDaggersTest extends Object {
 
         // We need 4 data points as history, plus one "current" datapoint
         testData.add(new PeriodicData(timeSeries[0], 10000));
-        testData.add(new PeriodicData(timeSeries[1], 9500));
-        testData.add(new PeriodicData(timeSeries[2], 10500));
+        testData.add(new PeriodicData(timeSeries[1], 9950));
+        testData.add(new PeriodicData(timeSeries[2], 10050));
         testData.add(new PeriodicData(timeSeries[3], 10000));
-        testData.add(new PeriodicData(timeSeries[4], 10238));
+        testData.add(new PeriodicData(timeSeries[4], 10016));
 
         contractManager = new UnitTestContractManager(strategyFactory, testData, 60);
         contractManager.run();
@@ -88,7 +88,7 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
         
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10244, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10022, entryOrder.getEntryLimitPrice());
         Assert.assertEquals(false, entryOrder.shouldTransmit());
     }
     
@@ -103,10 +103,10 @@ public class CatchingDaggersTest extends Object {
 
         // We need 4 data points as history, plus one "current" datapoint
         testData.add(new PeriodicData(timeSeries[0], 10000));
-        testData.add(new PeriodicData(timeSeries[1], 9500));
-        testData.add(new PeriodicData(timeSeries[2], 10500));
+        testData.add(new PeriodicData(timeSeries[1], 9950));
+        testData.add(new PeriodicData(timeSeries[2], 10050));
         testData.add(new PeriodicData(timeSeries[3], 10000));
-        testData.add(new PeriodicData(timeSeries[4], 10242));
+        testData.add(new PeriodicData(timeSeries[4], 10020));
 
         contractManager = new UnitTestContractManager(strategyFactory, testData, 60);
         contractManager.run();
@@ -120,7 +120,7 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
         
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10245, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10023, entryOrder.getEntryLimitPrice());
         Assert.assertEquals(true, entryOrder.shouldTransmit());
     }
     
@@ -158,9 +158,9 @@ public class CatchingDaggersTest extends Object {
         final Timestamp[] timeSeries = TestUtils.generateTimeSeries(3, now, 60000);
         final List<PeriodicData> testData = new ArrayList<PeriodicData>();
 
-        testData.add(new PeriodicData(timeSeries[0], 12000));
-        testData.add(new PeriodicData(timeSeries[1], 11000));
-        testData.add(new PeriodicData(timeSeries[2], 9000));
+        testData.add(new PeriodicData(timeSeries[0], 10050));
+        testData.add(new PeriodicData(timeSeries[1], 10000));
+        testData.add(new PeriodicData(timeSeries[2], 9950));
 
         contractManager = new UnitTestContractManager(strategyFactory, testData, 60);
         contractManager.run();
@@ -174,10 +174,10 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
 
         Assert.assertEquals(OrderAction.BUY, entryOrder.getOrderAction());
-        Assert.assertEquals(9000, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(9950, entryOrder.getEntryLimitPrice());
         // XXX: Need to manually check this number
-        Assert.assertEquals(10251, entryOrder.getExitLimitPrice());
-        Assert.assertEquals(7749, entryOrder.getExitStopPrice());
+        Assert.assertEquals(9988, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(9912, entryOrder.getExitStopPrice());
     }
     
     /**
@@ -196,9 +196,9 @@ public class CatchingDaggersTest extends Object {
         final Timestamp[] timeSeries = TestUtils.generateTimeSeries(3, now, 60000);
         final List<PeriodicData> testData = new ArrayList<PeriodicData>();
 
-        testData.add(new PeriodicData(timeSeries[0], 12000));
-        testData.add(new PeriodicData(timeSeries[1], 11000));
-        testData.add(new PeriodicData(timeSeries[2], 9000));
+        testData.add(new PeriodicData(timeSeries[0], 10020));
+        testData.add(new PeriodicData(timeSeries[1], 10010));
+        testData.add(new PeriodicData(timeSeries[2], 9990));
 
         contractManagerGBPUSD = new UnitTestContractManager(contractDetailsGBPUSD, strategyFactory, testData, 60);
         contractManagerEURUSD = new UnitTestContractManager(contractDetailsEURUSD, strategyFactory, testData, 60);
@@ -230,9 +230,9 @@ public class CatchingDaggersTest extends Object {
         final Timestamp[] timeSeries = TestUtils.generateTimeSeries(3, now, 60000);
         final List<PeriodicData> testData = new ArrayList<PeriodicData>();
 
-        testData.add(new PeriodicData(timeSeries[0], 9000));
-        testData.add(new PeriodicData(timeSeries[1], 7000));
-        testData.add(new PeriodicData(timeSeries[2], 10000));
+        testData.add(new PeriodicData(timeSeries[0], 10090));
+        testData.add(new PeriodicData(timeSeries[1], 10070));
+        testData.add(new PeriodicData(timeSeries[2], 10120));
 
         contractManager = new UnitTestContractManager(strategyFactory, testData, 60);
         contractManager.run();
@@ -246,8 +246,8 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
 
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10000, entryOrder.getEntryLimitPrice());
-        Assert.assertEquals(9000, entryOrder.getExitLimitPrice());
-        Assert.assertEquals(11000, entryOrder.getExitStopPrice());
+        Assert.assertEquals(10120, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10099, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(10141, entryOrder.getExitStopPrice());
     }
 }

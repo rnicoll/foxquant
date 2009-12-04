@@ -349,9 +349,9 @@ public class CatchingDaggers implements Strategy {
             if (projectedProfit < getMinimumProfit()) {
                 return null;
             }
-            //if (projectedProfit > getMaximumProfit()) {
-            //    return null;
-            //}
+            if (projectedProfit > getMaximumProfit()) {
+                return null;
+            }
         }
         
         if (distance > this.cancelDistance) {
@@ -405,9 +405,9 @@ public class CatchingDaggers implements Strategy {
             if (projectedProfit < getMinimumProfit()) {
                 return null;
             }
-            //if (projectedProfit > getMaximumProfit()) {
-            //    return null;
-            //}
+            if (projectedProfit > getMaximumProfit()) {
+                return null;
+            }
         }
         
         if (distance > this.cancelDistance) {
