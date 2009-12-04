@@ -88,7 +88,7 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
         
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10022, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10032, entryOrder.getEntryLimitPrice());
         Assert.assertEquals(false, entryOrder.shouldTransmit());
     }
     
@@ -120,7 +120,7 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
         
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10023, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10040, entryOrder.getEntryLimitPrice());
         Assert.assertEquals(true, entryOrder.shouldTransmit());
     }
     
@@ -174,10 +174,43 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
 
         Assert.assertEquals(OrderAction.BUY, entryOrder.getOrderAction());
+        // 50 below the bid price because the price appears to the strategy to have dropped 50 points in the last second
+        Assert.assertEquals(9900, entryOrder.getEntryLimitPrice());
+        // XXX: Need to manually check this number
+        Assert.assertEquals(9966, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(9834, entryOrder.getExitStopPrice());
+    }
+    
+    @Test
+    public void testFourPeriodLong()
+        throws InsufficientDataException, StrategyAlreadyExistsException, StrategyException {
+        final UnitTestContractManager contractManager;
+        final CatchingDaggersFactory strategyFactory = new CatchingDaggersFactory(3, 0.5);
+        final Date now = new Date();
+        final Timestamp[] timeSeries = TestUtils.generateTimeSeries(4, now, 60000);
+        final List<PeriodicData> testData = new ArrayList<PeriodicData>();
+
+        testData.add(new PeriodicData(timeSeries[0], 10050));
+        testData.add(new PeriodicData(timeSeries[1], 10000));
+        testData.add(new PeriodicData(timeSeries[2], 9950));
+        testData.add(new PeriodicData(timeSeries[3], 9950));
+
+        contractManager = new UnitTestContractManager(strategyFactory, testData, 60);
+        contractManager.run();
+
+        /* The price drops fast in the third data point, so we should have an
+         * order to go long.
+         */
+        final EntryOrder entryOrder = contractManager.getOrdersFromFlat();
+        Assert.assertNotNull(entryOrder);
+
+        contractManager.close();
+
+        Assert.assertEquals(OrderAction.BUY, entryOrder.getOrderAction());
         Assert.assertEquals(9950, entryOrder.getEntryLimitPrice());
         // XXX: Need to manually check this number
-        Assert.assertEquals(9983, entryOrder.getExitLimitPrice());
-        Assert.assertEquals(9917, entryOrder.getExitStopPrice());
+        Assert.assertEquals(9962, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(9938, entryOrder.getExitStopPrice());
     }
     
     /**
@@ -246,8 +279,8 @@ public class CatchingDaggersTest extends Object {
         contractManager.close();
 
         Assert.assertEquals(OrderAction.SELL, entryOrder.getOrderAction());
-        Assert.assertEquals(10120, entryOrder.getEntryLimitPrice());
-        Assert.assertEquals(10102, entryOrder.getExitLimitPrice());
-        Assert.assertEquals(10138, entryOrder.getExitStopPrice());
+        Assert.assertEquals(10170, entryOrder.getEntryLimitPrice());
+        Assert.assertEquals(10119, entryOrder.getExitLimitPrice());
+        Assert.assertEquals(10221, entryOrder.getExitStopPrice());
     }
 }

@@ -330,8 +330,8 @@ public class CatchingDaggers implements Strategy {
         final int askOffset = this.askRecentBuffer.getMeanExcludingNow() - this.askRecentBuffer.getNow();
         
         // Go long
-        // this.entryPrice = Math.min((this.mostRecentAsk - askOffset), projectedEntryPrice);
-        this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
+        this.entryPrice = Math.min((this.mostRecentAsk - askOffset), projectedEntryPrice);
+        // this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
         
         // We're closer to going long, so we want to get the distance from
         // the SMA down to the entry price.
@@ -386,8 +386,8 @@ public class CatchingDaggers implements Strategy {
         final int bidOffset = this.bidRecentBuffer.getNow() - this.bidRecentBuffer.getMeanExcludingNow();
                 
         // Go short
-        // this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
-        this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
+        this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
+        // this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
         
         // We're closer to going short, so we want to get the distance from
         // the entry price down to the SMA.
