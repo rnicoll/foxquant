@@ -668,10 +668,8 @@ public class CatchingDaggers implements Strategy {
                 }
                 this.historicalBars = this.bidBB.getValueCount();
 
-                this.bidMinuteBar.startNewBar(this.mostRecentBid);
-                this.bidMinuteBar.startTime = new java.sql.Timestamp(this.bidMinuteBar.startTime.getTime() + BAR_PERIOD);
-                this.askMinuteBar.startNewBar(this.mostRecentAsk);
-                this.askMinuteBar.startTime = this.bidMinuteBar.startTime;
+                this.bidMinuteBar.startNewBar(barStart, this.mostRecentBid);
+                this.askMinuteBar.startNewBar(barStart, this.mostRecentAsk);
             
                 if (this.historicalBars >= this.totalHistoricalBars &&
                     null != this.configuration) {
