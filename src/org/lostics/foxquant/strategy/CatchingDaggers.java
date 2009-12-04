@@ -39,6 +39,7 @@ import org.lostics.foxquant.model.PriceType;
 import org.lostics.foxquant.model.Strategy;
 import org.lostics.foxquant.model.StrategyException;
 import org.lostics.foxquant.model.TickData;
+import org.lostics.foxquant.util.PriceTimeFrameBuffer;
 import org.lostics.foxquant.Configuration;
 
 /**
@@ -127,9 +128,13 @@ public class CatchingDaggers implements Strategy {
 
     private final Timestamp runStart = new Timestamp(System.currentTimeMillis());
     
-    /** Used to re-create the per-minute data to go into the Bollinger bands. */
+    // Used to re-create the per-minute data to go into the Bollinger bands.
     private PartialPeriodicData askMinuteBar;
     private PartialPeriodicData bidMinuteBar;
+    
+    // Buffers for tracking price changes over time.
+    private PriceTimeFrameBuffer askRecentBuffer = new PriceTimeFrameBuffer(1000, 15);
+    private PriceTimeFrameBuffer bidRecentBuffer = new PriceTimeFrameBuffer(1000, 15);
     
     private boolean orderPlaced = false;
     
@@ -226,6 +231,9 @@ public class CatchingDaggers implements Strategy {
         } catch(InsufficientDataException e) {
             throw new StrategyException(e);
         }
+        
+        this.askRecentBuffer.add(periodicData.startTime.getTime(), periodicData.close);
+        this.bidRecentBuffer.add(periodicData.startTime.getTime(), periodicData.close);
                 
         this.cancelDistance = getCancelDistance(periodicData.getPrice(PriceType.HIGH_LOW_MEAN));
         this.orderDistance = getOrderDistance(periodicData.getPrice(PriceType.HIGH_LOW_MEAN));
@@ -279,6 +287,13 @@ public class CatchingDaggers implements Strategy {
         return this.askBB.getMidpoint();
     }
     
+    private int getMaximumProfit() {
+        // Calculate the minimum profit before we'll trade, based on the mid-point price.
+        double minimumProfit = (this.mostRecentAsk + this.mostRecentBid) * MAX_PROFIT_MULTIPLIER / 2.0;
+        
+        return (int)Math.ceil(minimumProfit);
+    }
+    
     private int getMinimumProfit() {
         // Calculate the minimum profit before we'll trade, based on the mid-point price.
         double minimumProfit = (this.mostRecentAsk + this.mostRecentBid) * MIN_PROFIT_MULTIPLIER / 2.0;
@@ -312,8 +327,10 @@ public class CatchingDaggers implements Strategy {
         throws InsufficientDataException, StrategyException {
         final int projectedEntryPrice = this.getEntryLong();
         final boolean transmit;
+        final int askOffset = this.askRecentBuffer.getMeanExcludingNow() - this.askRecentBuffer.getNow();
         
         // Go long
+        // this.entryPrice = Math.min((this.mostRecentAsk - askOffset), projectedEntryPrice);
         this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
         
         // We're closer to going long, so we want to get the distance from
@@ -332,6 +349,9 @@ public class CatchingDaggers implements Strategy {
             if (projectedProfit < getMinimumProfit()) {
                 return null;
             }
+            //if (projectedProfit > getMaximumProfit()) {
+            //    return null;
+            //}
         }
         
         if (distance > this.cancelDistance) {
@@ -363,8 +383,10 @@ public class CatchingDaggers implements Strategy {
         throws InsufficientDataException, StrategyException {
         final int projectedEntryPrice = this.getEntryShort();
         final boolean transmit;
-        
+        final int bidOffset = this.bidRecentBuffer.getNow() - this.bidRecentBuffer.getMeanExcludingNow();
+                
         // Go short
+        // this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
         this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
         
         // We're closer to going short, so we want to get the distance from
@@ -383,6 +405,9 @@ public class CatchingDaggers implements Strategy {
             if (projectedProfit < getMinimumProfit()) {
                 return null;
             }
+            //if (projectedProfit > getMaximumProfit()) {
+            //    return null;
+            //}
         }
         
         if (distance > this.cancelDistance) {
@@ -612,7 +637,10 @@ public class CatchingDaggers implements Strategy {
             
                 continue;
             }
-        
+
+            this.bidRecentBuffer.add(this.mostRecentUpdate, this.mostRecentBid);
+            this.askRecentBuffer.add(this.mostRecentUpdate, this.mostRecentAsk);
+            
             this.bidMinuteBar.update(this.mostRecentBid);
             this.askMinuteBar.update(this.mostRecentAsk);
             

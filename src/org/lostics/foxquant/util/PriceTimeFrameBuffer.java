@@ -13,6 +13,7 @@ public class PriceTimeFrameBuffer extends Object {
     
     /** A ring buffer of mean prices during each interval. */
     private final int[] intervals;
+    private int intervalMean = 0;
     
     private int intervalsFilled = 0;
     
@@ -36,6 +37,7 @@ public class PriceTimeFrameBuffer extends Object {
             currentBarSum == 0) {
             currentBarStartTime = currentTime;
         } else {
+            boolean recalculateMean = false;
             long intervalPassed = currentTime - currentBarStartTime;
             
             while (intervalPassed > this.shortInterval) {
@@ -52,6 +54,17 @@ public class PriceTimeFrameBuffer extends Object {
                 
                 this.currentBarSum = 0;
                 this.currentBarCount = 0;
+                recalculateMean = true;
+            }
+            
+            if (recalculateMean) {
+                // The buffer has been updated, recalculate the mean
+                int sum  = 0;
+                
+                for (int bufferIdx = 0; bufferIdx < this.intervalsFilled; bufferIdx++) {
+                    sum += this.intervals[bufferIdx];
+                }
+                this.intervalMean = (int)Math.round(sum * 1.0 / this.intervalsFilled);
             }
         }
         
@@ -96,5 +109,29 @@ public class PriceTimeFrameBuffer extends Object {
         }
         
         return low;
+    }
+    
+    /**
+     * Returns the mean of the time intervals excluding the one currently being
+     * built.
+     */
+    public int getMeanExcludingNow() {
+        if (intervalsFilled == 0 &&
+            currentBarSum == 0) {
+            throw new IllegalStateException("PriceTimeFrameBuffer.getMeanExcludingNow() called before any data has been provided.");
+        }
+        return this.intervalMean;
+    }
+    
+    /**
+     * Gets the time period currently being built.
+     */
+    public int getNow() {
+        if (intervalsFilled == 0 &&
+            currentBarSum == 0) {
+            throw new IllegalStateException("PriceTimeFrameBuffer.getNow() called before any data has been provided.");
+        }
+        
+        return this.currentBar;
     }
 }

@@ -37,6 +37,17 @@ public class PriceTimeFrameBufferTest extends Object {
     }
     
     @Test
+    public void testMean() {
+        final long baseTime = System.currentTimeMillis();
+        final PriceTimeFrameBuffer buffer = new PriceTimeFrameBuffer(1000, 5);
+        
+        buffer.add(baseTime, 6);
+        buffer.add(baseTime + 5, 4);
+        buffer.add(baseTime + 1005, 200);
+        Assert.assertEquals(5, buffer.getMeanExcludingNow());
+    }
+    
+    @Test
     public void testEightDatapoint() {
         final long baseTime = System.currentTimeMillis();
         final PriceTimeFrameBuffer buffer = new PriceTimeFrameBuffer(1000, 5);
