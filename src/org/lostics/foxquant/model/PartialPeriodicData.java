@@ -46,7 +46,9 @@ public class PartialPeriodicData {
      * Resets this price bar for use in a new time period (for example at the
      * start of the next minute).
      */
-    public void startNewBar(final int setOpen) {
+    public void startNewBar(final java.sql.Timestamp setStartTime, final int setOpen) {
+        this.startTime = setStartTime;
+        this.close = setOpen;
         this.open = setOpen;
         this.high = setOpen;
         this.low = setOpen;
