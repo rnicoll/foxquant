@@ -91,4 +91,13 @@ public class PeriodicData {
 
         return price;
     }
+    
+    public String toString() {
+        return "Periodic data (high: "
+            + this.high + ", low: "
+            + this.low + ", open: "
+            + this.open + ", close: "
+            + this.close + ", bar start: "
+            + this.startTime + ")";
+    }
 }
