@@ -59,6 +59,12 @@ public class CatchingDaggers implements Strategy {
     public static final long COOLDOWN_PERIOD = ONE_MINUTE * 30;
     
     /**
+     * How long, after the strategy started, before it will start trading.
+     * Used to ensure it has some real, live tick data before it starts trading.
+     */
+    public static final long WARMUP_PERIOD = ONE_MINUTE;
+    
+    /**
      * How long the trader expects to be in the market, for each trade,
      * measured in minutes. Used to generate targetProfitPerMinute.
      */
@@ -240,6 +246,8 @@ public class CatchingDaggers implements Strategy {
         this.transmitDistance = getTransmitDistance(periodicData.getPrice(PriceType.HIGH_LOW_MEAN));
         
         this.historicalBars = this.bidBB.getValueCount();
+        
+        // this.doNotTradeUntil = periodicData.startTime.getTime() + WARMUP_PERIOD;
     }
     
     /**
