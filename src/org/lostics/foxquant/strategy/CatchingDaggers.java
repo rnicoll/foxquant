@@ -47,6 +47,17 @@ import org.lostics.foxquant.Configuration;
  * SMA. Works well with 3 minute bars on currencies.
  */
 public class CatchingDaggers implements Strategy {
+    public enum State {
+        WAITING_COOLDOWN,
+        MISSING_DATA,
+        INSUFFICIENT_HISTORY,
+        MARKET_CLOSE_TOO_SOON,
+        PREDICTED_PROFIT_TOO_LOW,
+        PREDICTED_PROFIT_TOO_HIGH,
+        TOO_FAR_FROM_ENTRY,
+        ORDER_GENERATED
+    };
+
     private static final long ONE_MINUTE = 60000;
 
     public static final long BAR_PERIOD = ONE_MINUTE; // One minute
@@ -142,6 +153,7 @@ public class CatchingDaggers implements Strategy {
     private PriceTimeFrameBuffer askRecentBuffer = new PriceTimeFrameBuffer(1000, 15);
     private PriceTimeFrameBuffer bidRecentBuffer = new PriceTimeFrameBuffer(1000, 15);
     
+    private State strategyState = State.WAITING_COOLDOWN;
     private boolean orderPlaced = false;
     
     /** Re-usable entry order object */
@@ -338,6 +350,7 @@ public class CatchingDaggers implements Strategy {
         final int askOffset = this.askRecentBuffer.getMeanExcludingNow() - this.askRecentBuffer.getNow();
         
         // Go long
+        
         // this.entryPrice = Math.min((this.mostRecentAsk - askOffset), projectedEntryPrice);
         this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
         
@@ -347,6 +360,8 @@ public class CatchingDaggers implements Strategy {
         
         this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
         this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
+        this.actualExitLimitPrice = this.projectedExitLimitPrice;
+        this.actualExitStopPrice = this.projectedExitStopPrice;
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -355,15 +370,18 @@ public class CatchingDaggers implements Strategy {
             // target can't be accidentally re-used
             final int projectedProfit = (int)Math.ceil((this.getExitLong() - projectedEntryPrice) * PROFIT_TARGET_MULTIPLIER);
             if (projectedProfit < getMinimumProfit()) {
+                this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
                 return null;
             }
             if (projectedProfit > getMaximumProfit()) {
+                this.strategyState = State.PREDICTED_PROFIT_TOO_HIGH;
                 return null;
             }
         }
         
         if (distance > this.cancelDistance) {
             // Too far out, cancel any existing order.
+            this.strategyState = State.TOO_FAR_FROM_ENTRY;
             return null;
         }
         
@@ -371,6 +389,7 @@ public class CatchingDaggers implements Strategy {
             distance > this.orderDistance) {
             // No pre-existing order, and we're too far out to create a
             // new order, so delete them.
+            this.strategyState = State.TOO_FAR_FROM_ENTRY;
             return null;
         }
         
@@ -381,8 +400,7 @@ public class CatchingDaggers implements Strategy {
         this.entryOrderPool.setLong(this.entryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
             transmit);
-        this.actualExitLimitPrice = this.projectedExitLimitPrice;
-        this.actualExitStopPrice = this.projectedExitStopPrice;
+        this.strategyState = State.ORDER_GENERATED;
             
         return this.entryOrderPool;
     }
@@ -403,6 +421,8 @@ public class CatchingDaggers implements Strategy {
         
         this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
         this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
+        this.actualExitLimitPrice = this.projectedExitLimitPrice;
+        this.actualExitStopPrice = this.projectedExitStopPrice;
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -411,15 +431,18 @@ public class CatchingDaggers implements Strategy {
             // target can't be accidentally re-used
             final int projectedProfit = (int)Math.ceil((projectedEntryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
             if (projectedProfit < getMinimumProfit()) {
+                this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
                 return null;
             }
             if (projectedProfit > getMaximumProfit()) {
+                this.strategyState = State.PREDICTED_PROFIT_TOO_HIGH;
                 return null;
             }
         }
         
         if (distance > this.cancelDistance) {
             // Too far out, cancel any existing order.
+            this.strategyState = State.TOO_FAR_FROM_ENTRY;
             return null;
         }
         
@@ -427,6 +450,7 @@ public class CatchingDaggers implements Strategy {
             distance > this.orderDistance) {
             // No pre-existing order, and we're too far out to create a
             // new order, so delete them.
+            this.strategyState = State.TOO_FAR_FROM_ENTRY;
             return null;
         }
         
@@ -437,8 +461,7 @@ public class CatchingDaggers implements Strategy {
         this.entryOrderPool.setShort(this.entryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice,
             transmit);
-        this.actualExitLimitPrice = this.projectedExitLimitPrice;
-        this.actualExitStopPrice = this.projectedExitStopPrice;
+        this.strategyState = State.ORDER_GENERATED;
             
         return this.entryOrderPool;
     }
@@ -447,11 +470,13 @@ public class CatchingDaggers implements Strategy {
         throws StrategyException {
         if (this.mostRecentAsk == null ||
             this.mostRecentBid == null) {
+            this.strategyState = State.MISSING_DATA;
             this.doNotTradeUntil = System.currentTimeMillis() + ONE_MINUTE;
             return null;
         }
         
         if (this.historicalBars < this.totalHistoricalBars) {
+            this.strategyState = State.INSUFFICIENT_HISTORY;
             return null;
         }
         
@@ -464,10 +489,12 @@ public class CatchingDaggers implements Strategy {
         timeToClose = this.marketClose.getTime() - now;
 
         if (timeToClose <= MARKET_CLOSE_SOFT_STOP) {
+            this.strategyState = State.MARKET_CLOSE_TOO_SOON;
             return null;
         }
         
         if (this.doNotTradeUntil > now) {
+            this.strategyState = State.WAITING_COOLDOWN;
             return null;
         }
         
@@ -504,6 +531,7 @@ public class CatchingDaggers implements Strategy {
         final long timeToClose = marketClose.getTime() - now.getTime();
 
         if (timeToClose <= MARKET_CLOSE_HARD_STOP) {
+            this.strategyState = State.MARKET_CLOSE_TOO_SOON;
             return null;
         }
         
@@ -527,6 +555,7 @@ public class CatchingDaggers implements Strategy {
         final long timeToClose = marketClose.getTime() - now.getTime();
 
         if (timeToClose <= MARKET_CLOSE_HARD_STOP) {
+            this.strategyState = State.MARKET_CLOSE_TOO_SOON;
             return null;
         }
         
@@ -539,6 +568,10 @@ public class CatchingDaggers implements Strategy {
             this.entryPrice + this.targetProfit);
             
         return this.exitOrdersPool;
+    }
+    
+    public State getState() {
+        return this.strategyState;
     }
     
     /* MUST only be called from the Swing event dispatcher thread. Panel

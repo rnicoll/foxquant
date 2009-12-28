@@ -11,6 +11,7 @@ package org.lostics.foxquant.model;
  */
 public class EntryOrder extends Object {
     private boolean transmit;
+    private boolean valid = false;
     private int entryLimitPrice;
     private int exitLimitPrice;
     private int exitStopPrice;
@@ -85,6 +86,14 @@ public class EntryOrder extends Object {
     }
     
     /**
+     * Returns whether this order is valid. Newly created orders are not
+     * valid until prices have been successfully set on them.
+     */
+    public boolean isValid() {
+        return this.valid;
+    }
+    
+    /**
      * Generates an order to go long.
      *
      * @param setEntryLimitPrice the maximum price to pay for the asset.
@@ -106,6 +115,7 @@ public class EntryOrder extends Object {
             throw new IllegalArgumentException("Stop-loss price for exiting a long position must be less than the entry price.");
         }
         
+        this.valid = true;
         this.orderAction = OrderAction.BUY;
         this.entryLimitPrice = setEntryLimitPrice;
         this.exitLimitPrice = setExitLimitPrice;
@@ -124,6 +134,7 @@ public class EntryOrder extends Object {
             throw new IllegalArgumentException("Stop-loss price for exiting a short position must be greater than the entry price.");
         }
         
+        this.valid = true;
         this.orderAction = OrderAction.SELL;
         this.entryLimitPrice = setEntryLimitPrice;
         this.exitLimitPrice = setExitLimitPrice;
