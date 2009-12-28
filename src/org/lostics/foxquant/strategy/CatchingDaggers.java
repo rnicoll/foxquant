@@ -783,6 +783,10 @@ public class CatchingDaggers implements Strategy {
         private final JLabel actualProfitLabel = new JLabel("N/A");
         private final JLabel actualLossLabel = new JLabel("N/A");
         
+        private final JLabel statusLabel = new JLabel("");
+        
+        private       CatchingDaggers.State previousState = null;
+        
         private         TFPanel() {
             super();
         }
@@ -808,6 +812,8 @@ public class CatchingDaggers implements Strategy {
             this.actualProfitLabel.setBorder(border);
             this.actualLossLabel.setBorder(border);
             
+            this.statusLabel.setBorder(border);
+            
             this.setLayout(layout);
             //this.add(cdDisplay);
             
@@ -832,6 +838,8 @@ public class CatchingDaggers implements Strategy {
             this.add(this.actualProfitLabel);
             this.add(new JLabel("Loss"));
             this.add(this.actualLossLabel);
+            
+            this.add(this.statusLabel);
 
             final int totalComponents = ROWS * COLUMNS;
             final Spring xInterColumnSpring = Spring.constant(5, 20, 1000);
@@ -893,14 +901,22 @@ public class CatchingDaggers implements Strategy {
                     bottomRightConstraint = constraints;
                 }
             }
+            
+            // Give the status display a position
+            final SpringLayout.Constraints statusConstraints = layout.getConstraints(this.statusLabel);
+            statusConstraints.setX(xInterColumnSpring);
+            statusConstraints.setY(Spring.sum(bottomRightConstraint.getConstraint(SpringLayout.SOUTH),
+                yInterColumnSpring));
+            statusConstraints.setHeight(maxHeightSpring);
+            statusConstraints.setConstraint(SpringLayout.EAST, bottomRightConstraint.getConstraint(SpringLayout.EAST));
 
             // Give the panel a size so it actually renders!
-            SpringLayout.Constraints panelConstraints = layout.getConstraints(this);
+            final SpringLayout.Constraints panelConstraints = layout.getConstraints(this);
             panelConstraints.setConstraint(SpringLayout.SOUTH,
-                Spring.sum(yInterColumnSpring, bottomRightConstraint.getConstraint(SpringLayout.SOUTH))
+                Spring.sum(yInterColumnSpring, statusConstraints.getConstraint(SpringLayout.SOUTH))
             );
             panelConstraints.setConstraint(SpringLayout.EAST,
-                Spring.sum(xInterColumnSpring, bottomRightConstraint.getConstraint(SpringLayout.EAST))
+                Spring.sum(xInterColumnSpring, statusConstraints.getConstraint(SpringLayout.EAST))
             );
         }
         
@@ -966,7 +982,41 @@ public class CatchingDaggers implements Strategy {
                 + CatchingDaggers.this.totalHistoricalBars);
             this.marketCloseLabel.setText(formatMarketClose(CatchingDaggers.this.marketClose));
             
-            if (CatchingDaggers.this.orderPlaced) {
+            if (this.previousState != CatchingDaggers.this.strategyState) {
+                this.previousState = CatchingDaggers.this.strategyState;
+                switch (this.previousState) {
+                    case WAITING_COOLDOWN:
+                        this.statusLabel.setText("Cooldown in progress.");
+                        break;
+                    case MISSING_DATA:
+                        this.statusLabel.setText("Missing bid/ask data.");
+                        break;
+                    case INSUFFICIENT_HISTORY:
+                        this.statusLabel.setText("Insufficient historical data.");
+                        break;
+                    case MARKET_CLOSE_TOO_SOON:
+                        this.statusLabel.setText("Too close to market close.");
+                        break;
+                    case PREDICTED_PROFIT_TOO_LOW:
+                        this.statusLabel.setText("Predicted profit too low.");
+                        break;
+                    case PREDICTED_PROFIT_TOO_HIGH:
+                        this.statusLabel.setText("Predicted profit too high.");
+                        break;
+                    case TOO_FAR_FROM_ENTRY:
+                        this.statusLabel.setText("Too far from entry point.");
+                        break;
+                    case ORDER_GENERATED:
+                        this.statusLabel.setText("Order generated.");
+                        break;
+                    default:
+                        this.statusLabel.setText("Unknown state \""
+                            + this.previousState + "\".");
+                        break;
+                }
+            }
+            
+            if (CatchingDaggers.this.entryOrderPool.isValid()) {
                 if (CatchingDaggers.this.entryOrderPool.isLong()) {
                     this.longShortLabel.setText("Long");
                 } else {
