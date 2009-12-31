@@ -295,7 +295,8 @@ public class TWSContractManager extends AbstractContractManager {
             return;
         }
         
-        if (this.entryOrderWrapper.getAction() != orderDetails.getOrderAction()) {
+        if (this.entryOrderWrapper.getAction() != orderDetails.getOrderAction() ||
+            this.entryOrderWrapper.getType() != orderDetails.getOrderType()) {
             // Order direction has changed. Cancel all orders, then return once that's done
             this.state = CMState.TARGET_FLAT;
             log.info("Cancelling entry order in an attempt to flatten to the market before switching trade side.");

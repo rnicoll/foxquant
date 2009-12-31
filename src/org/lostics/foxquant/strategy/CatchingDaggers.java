@@ -369,7 +369,8 @@ public class CatchingDaggers implements Strategy {
             this.entryOrderPool.setLongLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
-            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice, this.entryPrice,
+            // XXX: Entry price limit decrement should be based on average spread
+            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - 2, this.entryPrice,
                 this.projectedExitStopPrice, this.projectedExitLimitPrice);
         }
         
@@ -403,9 +404,15 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        this.longTradeRequest.queueIfInactive();
-        this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
-            this.longTradeRequest.isApproved());
+        if (!isInverted) {
+            this.longTradeRequest.queueIfInactive();
+            this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
+                this.longTradeRequest.isApproved());
+        } else {
+            this.shortTradeRequest.queueIfInactive();
+            this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
+                this.shortTradeRequest.isApproved());
+        }
         this.strategyState = State.ORDER_GENERATED;
             
         return this.entryOrderPool;
@@ -433,7 +440,8 @@ public class CatchingDaggers implements Strategy {
             this.entryOrderPool.setShortLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
-            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice, this.entryPrice,
+            // XXX: Entry price limit increment should be based on average spread
+            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice + 3, this.entryPrice,
                 this.projectedExitStopPrice, this.projectedExitLimitPrice);
         }
         
@@ -467,10 +475,15 @@ public class CatchingDaggers implements Strategy {
             return null;
         }
         
-        this.shortTradeRequest.queueIfInactive();
-
-        this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
-            this.shortTradeRequest.isApproved());
+        if (!isInverted) {
+            this.shortTradeRequest.queueIfInactive();
+            this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
+                this.shortTradeRequest.isApproved());
+        } else {
+            this.longTradeRequest.queueIfInactive();
+            this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
+                this.longTradeRequest.isApproved());
+        }
         this.strategyState = State.ORDER_GENERATED;
             
         return this.entryOrderPool;
@@ -516,11 +529,15 @@ public class CatchingDaggers implements Strategy {
             if (distanceFromLongEntry < distanceFromShortEntry) {
                 entryOrder = generateLongOrder(distanceFromLongEntry);
                 if (null == entryOrder) {
+                    // Cancel both to ensure we catch inverted orders
                     this.longTradeRequest.cancelIfQueued();
+                    this.shortTradeRequest.cancelIfQueued();
                 }
             } else {
                 entryOrder = generateShortOrder(distanceFromShortEntry);
                 if (null == entryOrder) {
+                    // Cancel both to ensure we catch inverted orders
+                    this.longTradeRequest.cancelIfQueued();
                     this.shortTradeRequest.cancelIfQueued();
                 }
             }

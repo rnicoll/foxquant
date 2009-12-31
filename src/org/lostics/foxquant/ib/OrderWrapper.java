@@ -135,6 +135,10 @@ class OrderWrapper extends Object {
     public boolean getTransmitFlag() {
         return this.order.m_transmit;
     }
+
+    public OrderType getType() {
+        return this.type;
+    }
     
     public boolean hasValidOrder() {
         return null != this.order;
