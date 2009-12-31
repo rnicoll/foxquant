@@ -364,7 +364,7 @@ public class CatchingDaggers implements Strategy {
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
         
-        this.entryOrderPool.setLong(this.entryPrice,
+        this.entryOrderPool.setLongLimitOrder(this.entryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice);
         
         // Check the spread on the Bollinger Band is wide enough to make this
@@ -423,7 +423,7 @@ public class CatchingDaggers implements Strategy {
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
 
-        this.entryOrderPool.setShort(this.entryPrice,
+        this.entryOrderPool.setShortLimitOrder(this.entryPrice,
             this.projectedExitLimitPrice, this.projectedExitStopPrice);
         
         // Check the spread on the Bollinger Band is wide enough to make this

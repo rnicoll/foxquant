@@ -14,7 +14,6 @@ import com.ib.client.ContractDetails;
 import com.ib.client.Contract;
 import com.ib.client.Order;
 
-import org.lostics.foxquant.ib.OrderType;
 import org.lostics.foxquant.model.AbstractContractManager;
 import org.lostics.foxquant.model.ContractManager;
 import org.lostics.foxquant.model.ContractPosition;

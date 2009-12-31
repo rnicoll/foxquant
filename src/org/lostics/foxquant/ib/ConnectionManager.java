@@ -55,6 +55,7 @@ import org.lostics.foxquant.model.HistoricBarSize;
 import org.lostics.foxquant.model.HistoricalDataConsumer;
 import org.lostics.foxquant.model.HistoricalDataSource;
 import org.lostics.foxquant.model.OrderStatus;
+import org.lostics.foxquant.model.OrderType;
 import org.lostics.foxquant.model.PeriodicData;
 import org.lostics.foxquant.model.StrategyAlreadyExistsException;
 import org.lostics.foxquant.model.StrategyFactory;

@@ -15,6 +15,7 @@ import org.lostics.foxquant.model.EntryOrder;
 import org.lostics.foxquant.model.ExitOrders;
 import org.lostics.foxquant.model.OrderAction;
 import org.lostics.foxquant.model.OrderStatus;
+import org.lostics.foxquant.model.OrderType;
 import org.lostics.foxquant.Configuration;
 
 /**

@@ -13,9 +13,11 @@ public class EntryOrder extends Object {
     private boolean transmit;
     private boolean valid = false;
     private int entryLimitPrice;
+    private int entryStopPrice;
     private int exitLimitPrice;
     private int exitStopPrice;
     private OrderAction orderAction;
+    private OrderType orderType;
     
     public EntryOrder() {
     }
@@ -105,7 +107,7 @@ public class EntryOrder extends Object {
      * that the order will not be transmitted before it's true, or will be once
      * is it set true. True to transmit, false not to.
      */
-    public void setLong(final int setEntryLimitPrice,
+    public void setLongLimitOrder(final int setEntryLimitPrice,
         final int setExitLimitPrice, final int setExitStopPrice) {
         if (setExitLimitPrice <= setEntryLimitPrice) {
             throw new IllegalArgumentException("Limit price for exiting a long position must be greater than the entry price.");
@@ -119,9 +121,11 @@ public class EntryOrder extends Object {
         this.entryLimitPrice = setEntryLimitPrice;
         this.exitLimitPrice = setExitLimitPrice;
         this.exitStopPrice = setExitStopPrice;
+        
+        this.orderType = OrderType.LMT;
     }
     
-    public void setShort(final int setEntryLimitPrice,
+    public void setShortLimitOrder(final int setEntryLimitPrice,
         final int setExitLimitPrice, final int setExitStopPrice) {
         if (setExitLimitPrice >= setEntryLimitPrice) {
             throw new IllegalArgumentException("Limit price for exiting a short position must be less than the entry price.");
@@ -135,6 +139,8 @@ public class EntryOrder extends Object {
         this.entryLimitPrice = setEntryLimitPrice;
         this.exitLimitPrice = setExitLimitPrice;
         this.exitStopPrice = setExitStopPrice;
+        
+        this.orderType = OrderType.LMT;
     }
     
     public void setTransmit(final boolean setTransmit) {

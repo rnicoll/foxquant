@@ -32,6 +32,7 @@ import org.lostics.foxquant.model.ExitOrders;
 import org.lostics.foxquant.model.OrderAction;
 import org.lostics.foxquant.model.OrderAlreadyInProgressException;
 import org.lostics.foxquant.model.OrderStatus;
+import org.lostics.foxquant.model.OrderType;
 import org.lostics.foxquant.model.PeriodicDataBuffer;
 import org.lostics.foxquant.model.PeriodicData;
 import org.lostics.foxquant.model.PositionIsFlatException;
