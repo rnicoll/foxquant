@@ -365,8 +365,13 @@ public class CatchingDaggers implements Strategy {
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
         
-        this.entryOrderPool.setLongLimitOrder(this.entryPrice,
-            this.projectedExitLimitPrice, this.projectedExitStopPrice);
+        if (!isInverted) {
+            this.entryOrderPool.setLongLimitOrder(this.entryPrice,
+                this.projectedExitLimitPrice, this.projectedExitStopPrice);
+        } else {
+            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice, this.entryPrice,
+                this.projectedExitStopPrice, this.projectedExitLimitPrice);
+        }
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -424,8 +429,13 @@ public class CatchingDaggers implements Strategy {
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
 
-        this.entryOrderPool.setShortLimitOrder(this.entryPrice,
-            this.projectedExitLimitPrice, this.projectedExitStopPrice);
+        if (!isInverted) {
+            this.entryOrderPool.setShortLimitOrder(this.entryPrice,
+                this.projectedExitLimitPrice, this.projectedExitStopPrice);
+        } else {
+            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice, this.entryPrice,
+                this.projectedExitStopPrice, this.projectedExitLimitPrice);
+        }
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -525,7 +535,7 @@ public class CatchingDaggers implements Strategy {
 
     public ExitOrders getOrdersFromLong()
         throws StrategyException {
-        // Surely we can cache these?
+        // XXX: Surely we can cache these?
         final Date now = new Date();
         final Date marketClose = this.contractManager.getMarketCloseTime(now);
         final long timeToClose = marketClose.getTime() - now.getTime();
@@ -549,7 +559,7 @@ public class CatchingDaggers implements Strategy {
 
     public ExitOrders getOrdersFromShort()
         throws StrategyException {
-        // Surely we can cache these?
+        // XXX: Surely we can cache these?
         final Date now = new Date();
         final Date marketClose = this.contractManager.getMarketCloseTime(now);
         final long timeToClose = marketClose.getTime() - now.getTime();
@@ -636,10 +646,19 @@ public class CatchingDaggers implements Strategy {
         this.timeEnteredMarket = System.currentTimeMillis();
         this.entryPrice = avgFillPrice;
         
-        if (action == OrderAction.BUY) {
-            actualTradeDistance = this.getExitLong() - this.entryPrice;
+        if (!isInverted) {
+            if (action == OrderAction.BUY) {
+                actualTradeDistance = this.getExitLong() - this.entryPrice;
+            } else {
+                actualTradeDistance = this.entryPrice - this.getExitShort();
+            }
         } else {
-            actualTradeDistance = this.entryPrice - this.getExitShort();
+            // XXX: Check this maths!
+            if (action == OrderAction.BUY) {
+                actualTradeDistance = this.entryPrice - this.getExitShort();
+            } else {
+                actualTradeDistance = this.getExitLong() - this.entryPrice;
+            }
         }
         this.strategyState = State.ORDER_FILLED;
         
