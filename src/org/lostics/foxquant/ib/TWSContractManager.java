@@ -540,6 +540,8 @@ public class TWSContractManager extends AbstractContractManager {
                             + this.contract.m_currency + ".");
                     }
                 }
+                
+                // XXX: Should double check all orders have filled/cancelled
             }
         }
         
@@ -673,7 +675,7 @@ public class TWSContractManager extends AbstractContractManager {
                 }
             } else {
                 // Strategy returning null entry orders means no valid trade price.
-                // Cancel any outstand orders and then ensure we are flat to the market.
+                // Cancel any outstanding orders and then ensure we are flat to the market.
                 cancelOrders();
                 if (this.entryOrderWrapper.hasValidOrder()) {
                     // We had a valid order in the market, so ensure we go flat successfully

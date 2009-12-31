@@ -55,7 +55,9 @@ public class CatchingDaggers implements Strategy {
         PREDICTED_PROFIT_TOO_LOW,
         PREDICTED_PROFIT_TOO_HIGH,
         TOO_FAR_FROM_ENTRY,
-        ORDER_GENERATED
+        ORDER_GENERATED,
+        ORDER_FILLED,
+        WAITING_FLAT
     };
 
     private static final long ONE_MINUTE = 60000;
@@ -67,7 +69,7 @@ public class CatchingDaggers implements Strategy {
      * Used to ensure it doesn't re-enter immediately after a stop-loss is
      * hit (although should probably wait until the market hits SMA really).
      */
-    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 30;
+    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 15;
     
     /**
      * How long, after the strategy started, before it will start trading.
@@ -612,11 +614,10 @@ public class CatchingDaggers implements Strategy {
     public void handleExitOrderStatus(final OrderAction action, final boolean isLimitOrder,
         final OrderStatus status, final int filled, final int remaining, final int avgFillPrice)
         throws StrategyException {
-        if (status == OrderStatus.Cancelled ||
-            (status == OrderStatus.Filled &&
-            0 == remaining)) {
+        if (status == OrderStatus.Filled &&
+            0 == remaining) {
+            this.strategyState = State.WAITING_FLAT;
             this.doNotTradeUntil = System.currentTimeMillis() + COOLDOWN_PERIOD;
-            this.handlePositionFlat();
         }
         
         return;
@@ -642,6 +643,7 @@ public class CatchingDaggers implements Strategy {
         } else {
             actualTradeDistance = this.entryPrice - this.getExitShort();
         }
+        this.strategyState = State.ORDER_FILLED;
         
         // Profit target is a multiple of trade distance
         this.targetProfit = (int)Math.round(actualTradeDistance * PROFIT_TARGET_MULTIPLIER);
@@ -941,8 +943,12 @@ public class CatchingDaggers implements Strategy {
             final int seconds = (int)(timeRemaining / 1000);
             
             return Integer.toString(hours) + ":"
-                + minutes + ":"
-                + seconds;
+                + (minutes < 10
+                    ? "0" + minutes
+                    : minutes) + ":"
+                + (seconds < 10
+                    ? "0" + seconds
+                    : seconds);
         }
         
         /* protected CatchingDaggersDisplay getDisplay() {
@@ -986,7 +992,8 @@ public class CatchingDaggers implements Strategy {
                 this.previousState = CatchingDaggers.this.strategyState;
                 switch (this.previousState) {
                     case WAITING_COOLDOWN:
-                        this.statusLabel.setText("Cooldown in progress.");
+                        this.statusLabel.setText("Cooldown in progress until "
+                            + new java.util.Date(CatchingDaggers.this.doNotTradeUntil) + ".");
                         break;
                     case MISSING_DATA:
                         this.statusLabel.setText("Missing bid/ask data.");
@@ -1008,6 +1015,12 @@ public class CatchingDaggers implements Strategy {
                         break;
                     case ORDER_GENERATED:
                         this.statusLabel.setText("Order generated.");
+                        break;
+                    case ORDER_FILLED:
+                        this.statusLabel.setText("Order filled.");
+                        break;
+                    case WAITING_FLAT:
+                        this.statusLabel.setText("Waiting for position to be flat.");
                         break;
                     default:
                         this.statusLabel.setText("Unknown state \""
