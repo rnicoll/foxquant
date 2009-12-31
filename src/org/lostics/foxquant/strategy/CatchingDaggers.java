@@ -155,6 +155,7 @@ public class CatchingDaggers implements Strategy {
     private PriceTimeFrameBuffer askRecentBuffer = new PriceTimeFrameBuffer(1000, 15);
     private PriceTimeFrameBuffer bidRecentBuffer = new PriceTimeFrameBuffer(1000, 15);
     
+    private boolean isInverted = true;
     private State strategyState = State.WAITING_COOLDOWN;
     private boolean orderPlaced = false;
     

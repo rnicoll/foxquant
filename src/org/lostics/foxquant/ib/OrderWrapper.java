@@ -29,7 +29,8 @@ class OrderWrapper extends Object {
     private Date created = null;
     private Order order = null;
     private OrderAction action = null;
-    private int price;
+    private int limitPrice;
+    private int stopPrice;
     private OrderStatus status = null;
     private OrderType type = null;
     
@@ -46,28 +47,53 @@ class OrderWrapper extends Object {
         this.status = null;
     }
     
-    public Order createOrder(final Connection database,
+    public Order createLimitOrder(final Connection database,
+        final OrderAction setAction,
+        final int quantity, final int setLimitPrice)
+        throws OrderIDUnavailableException, SQLException {
+        return createOrder(database, setAction, OrderType.LMT,
+            quantity, setLimitPrice, 0);
+    }
+    
+    public Order createStopLimitOrder(final Connection database,
+        final OrderAction setAction,
+        final int quantity, final int setLimitPrice, final int setStopPrice)
+        throws OrderIDUnavailableException, SQLException {
+        return createOrder(database, setAction, OrderType.STPLMT,
+            quantity, setLimitPrice, setStopPrice);
+    }
+    
+    public Order createStopOrder(final Connection database,
+        final OrderAction setAction,
+        final int quantity, final int setStopPrice)
+        throws OrderIDUnavailableException, SQLException {
+        return createOrder(database, setAction, OrderType.STP,
+            quantity, 0, setStopPrice);
+    }
+    
+    private Order createOrder(final Connection database,
         final OrderAction setAction, final OrderType setType,
-        final int quantity, final int setPrice)
+        final int quantity, final int setLimitPrice,
+        final int setStopPrice)
         throws OrderIDUnavailableException, SQLException {
         this.order = new Order();
         
         this.action = setAction;
         this.created = new Date();
-        this.price = setPrice;
+        this.limitPrice = setLimitPrice;
+        this.stopPrice = setStopPrice;
         this.type = setType;
         this.status = OrderStatus.PendingSubmit;
         
         order.m_action = this.action.toString();
         order.m_totalQuantity = quantity;
         order.m_orderType = setType.toString();
-        if (this.type == OrderType.STP) {
-            order.m_lmtPrice = 0.00000;
-            order.m_auxPrice = this.price * getMinimumTick();
+        order.m_lmtPrice = setLimitPrice * getMinimumTick();
+        order.m_auxPrice = setStopPrice * getMinimumTick();
+        if (this.type == OrderType.STP ||
+            this.type == OrderType.STPLMT) {
             order.m_triggerMethod = ConnectionManager.TRIGGER_METHOD_DOUBLE_BID_ASK;
         } else {
-            order.m_lmtPrice = this.price * getMinimumTick();
-            order.m_auxPrice = 0.00000;
             order.m_triggerMethod = ConnectionManager.TRIGGER_METHOD_DEFAULT;
         }
         order.m_tif = TimeInForce.DAY.toString();
@@ -134,19 +160,48 @@ class OrderWrapper extends Object {
      *
      * @returns true if the price changes, false otherwise.
      */
-    public boolean setPrice(final int newPrice) {
-        if (newPrice == this.price) {
+    public boolean setLimitPrice(final int newPrice) {
+        if (newPrice == this.limitPrice) {
             return false;
         }
 
-        this.price = newPrice;
-        if (this.type == OrderType.STP) {
-            this.order.m_lmtPrice = 0.00000;
-            this.order.m_auxPrice = this.price * this.getMinimumTick();
-        } else {
-            this.order.m_lmtPrice = this.price * this.getMinimumTick();
-            this.order.m_auxPrice = 0.00000;
+        this.limitPrice = newPrice;
+        this.order.m_lmtPrice = this.limitPrice * this.getMinimumTick();
+        
+        return true;
+    }
+
+    /**
+     * Updates the price on the order.
+     *
+     * @returns true if the price changes, false otherwise.
+     */
+    public boolean setPrices(final int newLimitPrice, final int newStopPrice) {
+        if (newLimitPrice == this.limitPrice &&
+            newStopPrice == this.stopPrice) {
+            return false;
         }
+
+        this.limitPrice = newLimitPrice;
+        this.order.m_lmtPrice = this.limitPrice * this.getMinimumTick();
+        this.stopPrice = newStopPrice;
+        this.order.m_auxPrice = this.stopPrice * this.getMinimumTick();
+        
+        return true;
+    }
+
+    /**
+     * Updates the price on the order.
+     *
+     * @returns true if the price changes, false otherwise.
+     */
+    public boolean setStopPrice(final int newPrice) {
+        if (newPrice == this.stopPrice) {
+            return false;
+        }
+
+        this.stopPrice = newPrice;
+        this.order.m_auxPrice = this.stopPrice * this.getMinimumTick();
         
         return true;
     }

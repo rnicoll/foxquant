@@ -213,11 +213,29 @@ public class TWSContractManager extends AbstractContractManager {
      */
     private void placeInitialEntryOrder(final Connection database, final EntryOrder orderDetails)
         throws PositionNotFlatException,
-            OrderIDUnavailableException, SQLException {
+            OrderIDUnavailableException, SQLException, UnexpectedOrderTypeException {
         // No outstanding entry order, so create a new set of orders.
-        final Order entryOrder = this.entryOrderWrapper.createOrder(database,
-            orderDetails.getOrderAction(), OrderType.LMT,
-            DEFAULT_QUANTITY, orderDetails.getEntryLimitPrice());
+        final Order entryOrder;
+
+        switch (orderDetails.getOrderType()) {
+            case LMT:
+                entryOrder = this.entryOrderWrapper.createLimitOrder(database,
+                    orderDetails.getOrderAction(),
+                    DEFAULT_QUANTITY, orderDetails.getEntryLimitPrice());
+                break;
+            case STP:
+                entryOrder = this.entryOrderWrapper.createStopOrder(database,
+                    orderDetails.getOrderAction(),
+                    DEFAULT_QUANTITY, orderDetails.getEntryStopPrice());
+                break;
+            case STPLMT:
+                entryOrder = this.entryOrderWrapper.createStopLimitOrder(database,
+                    orderDetails.getOrderAction(),
+                    DEFAULT_QUANTITY, orderDetails.getEntryLimitPrice(), orderDetails.getEntryStopPrice());
+                break;
+            default:
+                throw new UnexpectedOrderTypeException(orderDetails.getOrderType());
+        }
 
         this.entryOrderFilled = 0;
         this.entryPrice = 0;
@@ -234,20 +252,20 @@ public class TWSContractManager extends AbstractContractManager {
         throws PositionNotFlatException,
             OrderIDUnavailableException, SQLException {
         final Order entryOrder = this.entryOrderWrapper.getOrder();
-        final Order limitProfitOrder = this.limitProfitOrderWrapper.createOrder(database,
+        final Order limitProfitOrder = this.limitProfitOrderWrapper.createLimitOrder(database,
             (orderDetails.getOrderAction() == OrderAction.BUY
                 ? OrderAction.SELL
-                : OrderAction.BUY), OrderType.LMT,
+                : OrderAction.BUY),
             DEFAULT_QUANTITY, orderDetails.getExitLimitPrice());
 
         limitProfitOrder.m_parentId = entryOrder.m_orderId;
         limitProfitOrder.m_ocaGroup = generateOCAGroup();
         limitProfitOrder.m_ocaType = 1; // Cancel all other orders
         
-        final Order stopLossOrder = this.stopLossOrderWrapper.createOrder(database,
+        final Order stopLossOrder = this.stopLossOrderWrapper.createStopOrder(database,
             (orderDetails.getOrderAction() == OrderAction.BUY
                 ? OrderAction.SELL
-                : OrderAction.BUY), OrderType.STP,
+                : OrderAction.BUY),
             DEFAULT_QUANTITY, orderDetails.getExitStopPrice());
             
         stopLossOrder.m_parentId = entryOrder.m_orderId;
@@ -266,7 +284,8 @@ public class TWSContractManager extends AbstractContractManager {
      */
     private void placeEntryOrders(final Connection database,
         final EntryOrder orderDetails)
-        throws PositionNotFlatException, OrderIDUnavailableException, SQLException {
+        throws PositionNotFlatException, OrderIDUnavailableException, SQLException,
+            UnexpectedOrderTypeException {
         if (this.position != 0) {
             throw new PositionNotFlatException("Could not place entry order because already in the market.");
         }
@@ -311,7 +330,7 @@ public class TWSContractManager extends AbstractContractManager {
                 // XXX: Limit/stop loss transmit should be set from the order status change
                 this.limitProfitOrderWrapper.setTransmitFlag(true);
                 this.stopLossOrderWrapper.setTransmitFlag(true);
-                this.entryOrderWrapper.setPrice(orderDetails.getEntryLimitPrice());
+                this.entryOrderWrapper.setPrices(orderDetails.getEntryLimitPrice(), orderDetails.getEntryStopPrice());
                 this.connectionManager.placeOrder(database,
                     this, this.contract, this.entryOrderWrapper.getOrder());
             }
@@ -319,15 +338,15 @@ public class TWSContractManager extends AbstractContractManager {
             return;
         }
 
-        if (this.entryOrderWrapper.setPrice(orderDetails.getEntryLimitPrice())) {
+        if (this.entryOrderWrapper.setPrices(orderDetails.getEntryLimitPrice(), orderDetails.getEntryStopPrice())) {
             this.connectionManager.placeOrder(database,
                 this, this.contract, this.entryOrderWrapper.getOrder());
         }
-        if (this.limitProfitOrderWrapper.setPrice(orderDetails.getExitLimitPrice())) {
+        if (this.limitProfitOrderWrapper.setLimitPrice(orderDetails.getExitLimitPrice())) {
             this.connectionManager.placeOrder(database,
                 this, this.contract, this.limitProfitOrderWrapper.getOrder());
         }
-        if (this.stopLossOrderWrapper.setPrice(orderDetails.getExitStopPrice())) {
+        if (this.stopLossOrderWrapper.setStopPrice(orderDetails.getExitStopPrice())) {
             this.connectionManager.placeOrder(database,
                 this, this.contract, this.stopLossOrderWrapper.getOrder());
         }
@@ -345,11 +364,11 @@ public class TWSContractManager extends AbstractContractManager {
             throw new PositionIsFlatException("Could not place exit orders because already flat to the market.");
         }
 
-        if (this.limitProfitOrderWrapper.setPrice(orderDetails.getExitLimitPrice())) {
+        if (this.limitProfitOrderWrapper.setLimitPrice(orderDetails.getExitLimitPrice())) {
             this.connectionManager.placeOrder(this.getDBConnection(),
                 this, this.contract, this.limitProfitOrderWrapper.getOrder());
         }
-        if (this.stopLossOrderWrapper.setPrice(orderDetails.getExitStopPrice())) {
+        if (this.stopLossOrderWrapper.setStopPrice(orderDetails.getExitStopPrice())) {
             this.connectionManager.placeOrder(this.getDBConnection(),
                 this, this.contract, this.stopLossOrderWrapper.getOrder());
         }

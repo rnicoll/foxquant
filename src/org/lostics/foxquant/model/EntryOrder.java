@@ -42,6 +42,10 @@ public class EntryOrder extends Object {
         return this.entryLimitPrice;
     }
     
+    public int getEntryStopPrice() {
+        return this.entryStopPrice;
+    }
+    
     public int getExitLimitPrice() {
         return this.exitLimitPrice;
     }
@@ -52,6 +56,13 @@ public class EntryOrder extends Object {
     
     public OrderAction getOrderAction() {
         return this.orderAction;
+    }
+    
+    /**
+     * Returns the type (limit, stop-limit, etc.) for the market ENTRY order.
+     */
+    public OrderType getOrderType() {
+        return this.orderType;
     }
     
     /**
@@ -96,16 +107,12 @@ public class EntryOrder extends Object {
     }
     
     /**
-     * Generates an order to go long.
+     * Generates an order to go long by limit order.
      *
      * @param setEntryLimitPrice the maximum price to pay for the asset.
      * @param setExitLimitPrice the minimum price at which to take the profit.
      * @param setExitStopPrice the maximum price to remain in the market before
      * exiting at a loss. Used to control maximum risk.
-     * @param setTransmit whether to enter this order into the market immediately.
-     * This is provides guidance to the contract manager, but does not guarantee
-     * that the order will not be transmitted before it's true, or will be once
-     * is it set true. True to transmit, false not to.
      */
     public void setLongLimitOrder(final int setEntryLimitPrice,
         final int setExitLimitPrice, final int setExitStopPrice) {
@@ -119,12 +126,50 @@ public class EntryOrder extends Object {
         this.valid = true;
         this.orderAction = OrderAction.BUY;
         this.entryLimitPrice = setEntryLimitPrice;
+        this.entryStopPrice = 0;
         this.exitLimitPrice = setExitLimitPrice;
         this.exitStopPrice = setExitStopPrice;
         
         this.orderType = OrderType.LMT;
     }
     
+    /**
+     * Generates an order to go long by stop-limit order.
+     *
+     * @param setEntryStopPrice the price at which the order becomes valid, once
+     * the current price is worse than the given price...
+     * @param setEntryLimitPrice the maximum price to pay for the asset.
+     * @param setExitLimitPrice the minimum price at which to take the profit.
+     * @param setExitStopPrice the maximum price to remain in the market before
+     * exiting at a loss. Used to control maximum risk.
+     */
+    public void setLongStopLimitOrder(final int setEntryLimitPrice, final int setEntryStopPrice,
+        final int setExitLimitPrice, final int setExitStopPrice) {
+        if (setExitLimitPrice <= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Limit price for exiting a long position must be greater than the entry price.");
+        }
+        if (setExitStopPrice >= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Stop-loss price for exiting a long position must be less than the entry price.");
+        }
+        
+        this.valid = true;
+        this.orderAction = OrderAction.BUY;
+        this.entryLimitPrice = setEntryLimitPrice;
+        this.entryStopPrice = setEntryStopPrice;
+        this.exitLimitPrice = setExitLimitPrice;
+        this.exitStopPrice = setExitStopPrice;
+        
+        this.orderType = OrderType.STPLMT;
+    }
+    
+    /**
+     * Generates an order to go short by limit order.
+     *
+     * @param setEntryLimitPrice the maximum price to pay for the asset.
+     * @param setExitLimitPrice the minimum price at which to take the profit.
+     * @param setExitStopPrice the maximum price to remain in the market before
+     * exiting at a loss. Used to control maximum risk.
+     */
     public void setShortLimitOrder(final int setEntryLimitPrice,
         final int setExitLimitPrice, final int setExitStopPrice) {
         if (setExitLimitPrice >= setEntryLimitPrice) {
@@ -137,12 +182,48 @@ public class EntryOrder extends Object {
         this.valid = true;
         this.orderAction = OrderAction.SELL;
         this.entryLimitPrice = setEntryLimitPrice;
+        this.entryStopPrice = 0;
         this.exitLimitPrice = setExitLimitPrice;
         this.exitStopPrice = setExitStopPrice;
         
         this.orderType = OrderType.LMT;
     }
     
+    /**
+     * Generates an order to go short by stop-limit order.
+     *
+     * @param setEntryStopPrice the price at which the order becomes valid, once
+     * the current price is worse than the given price...
+     * @param setEntryLimitPrice the maximum price to pay for the asset.
+     * @param setExitLimitPrice the minimum price at which to take the profit.
+     * @param setExitStopPrice the maximum price to remain in the market before
+     * exiting at a loss. Used to control maximum risk.
+     */
+    public void setShortStopLimitOrder(final int setEntryLimitPrice, final int setEntryStopPrice,
+        final int setExitLimitPrice, final int setExitStopPrice) {
+        if (setExitLimitPrice >= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Limit price for exiting a short position must be less than the entry price.");
+        }
+        if (setExitStopPrice <= setEntryLimitPrice) {
+            throw new IllegalArgumentException("Stop-loss price for exiting a short position must be greater than the entry price.");
+        }
+        
+        this.valid = true;
+        this.orderAction = OrderAction.SELL;
+        this.entryLimitPrice = setEntryLimitPrice;
+        this.entryStopPrice = setEntryStopPrice;
+        this.exitLimitPrice = setExitLimitPrice;
+        this.exitStopPrice = setExitStopPrice;
+        
+        this.orderType = OrderType.STPLMT;
+    }
+    
+    /**
+     * @param setTransmit whether to enter this order into the market immediately.
+     * This is provides guidance to the contract manager, but does not guarantee
+     * that the order will not be transmitted before it's true, or will be once
+     * is it set true. True to transmit, false not to.
+     */
     public void setTransmit(final boolean setTransmit) {
         this.transmit = setTransmit;
     }
