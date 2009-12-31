@@ -348,7 +348,6 @@ public class CatchingDaggers implements Strategy {
     private EntryOrder generateLongOrder(final int distance)
         throws InsufficientDataException, StrategyException {
         final int projectedEntryPrice = this.getEntryLong();
-        final boolean transmit;
         final int askOffset = this.askRecentBuffer.getMeanExcludingNow() - this.askRecentBuffer.getNow();
         
         // Go long
@@ -364,6 +363,9 @@ public class CatchingDaggers implements Strategy {
         this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
+        
+        this.entryOrderPool.setLong(this.entryPrice,
+            this.projectedExitLimitPrice, this.projectedExitStopPrice);
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -396,12 +398,8 @@ public class CatchingDaggers implements Strategy {
         }
         
         this.longTradeRequest.queueIfInactive();
-        transmit = this.transmitDistance > distance &&
-            this.longTradeRequest.isApproved();
-
-        this.entryOrderPool.setLong(this.entryPrice,
-            this.projectedExitLimitPrice, this.projectedExitStopPrice,
-            transmit);
+        this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
+            this.longTradeRequest.isApproved());
         this.strategyState = State.ORDER_GENERATED;
             
         return this.entryOrderPool;
@@ -410,7 +408,6 @@ public class CatchingDaggers implements Strategy {
     private EntryOrder generateShortOrder(final int distance)
         throws InsufficientDataException, StrategyException {
         final int projectedEntryPrice = this.getEntryShort();
-        final boolean transmit;
         final int bidOffset = this.bidRecentBuffer.getNow() - this.bidRecentBuffer.getMeanExcludingNow();
                 
         // Go short
@@ -425,6 +422,9 @@ public class CatchingDaggers implements Strategy {
         this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
         this.actualExitStopPrice = this.projectedExitStopPrice;
+
+        this.entryOrderPool.setShort(this.entryPrice,
+            this.projectedExitLimitPrice, this.projectedExitStopPrice);
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -457,12 +457,9 @@ public class CatchingDaggers implements Strategy {
         }
         
         this.shortTradeRequest.queueIfInactive();
-        transmit = this.transmitDistance > distance &&
-            this.shortTradeRequest.isApproved();
 
-        this.entryOrderPool.setShort(this.entryPrice,
-            this.projectedExitLimitPrice, this.projectedExitStopPrice,
-            transmit);
+        this.entryOrderPool.setTransmit(this.transmitDistance > distance &&
+            this.shortTradeRequest.isApproved());
         this.strategyState = State.ORDER_GENERATED;
             
         return this.entryOrderPool;
