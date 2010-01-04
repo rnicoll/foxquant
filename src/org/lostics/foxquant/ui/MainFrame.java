@@ -78,6 +78,7 @@ public class MainFrame extends JFrame implements WindowListener {
 
     public static void createAndShowUI(final Configuration setConfiguration)
         throws DatabaseUnavailableException, IQFeedException, SQLException {
+        // XXX: Should handle runtime exceptions by exiting here.
         final MainFrame frame = new MainFrame(setConfiguration);
         frame.createAndShowUI();
     }

@@ -1,4 +1,3 @@
-// $Id: IQFeedGateway.java 706 2009-11-11 10:41:13Z jrn $
 package org.lostics.foxquant.iqfeed;
 
 import java.io.BufferedReader;
@@ -17,8 +16,6 @@ import java.util.TimeZone;
 
 import com.ib.client.ContractDetails;
 
-import com.iqfeed.IQ_32;
-
 import org.apache.log4j.Logger;
 
 import org.lostics.foxquant.database.DatabaseThread;
@@ -26,31 +23,53 @@ import org.lostics.foxquant.model.HistoricBarSize;
 import org.lostics.foxquant.model.HistoricalDataConsumer;
 import org.lostics.foxquant.model.HistoricalDataSource;
 import org.lostics.foxquant.model.PeriodicData;
+import org.lostics.foxquant.Configuration;
 
 public class IQFeedGateway extends Thread implements HistoricalDataSource {
-    public static final String MSG_END = "!ENDMSG!";
-    public static final String MSG_NO_DATA = "!NO_DATA!";
+    // Size, in characters, of the admin socket read buffer.
+    private static final int ADMIN_BUFFER_SIZE = 512;
 
-    public static final int HISTORICAL_DATA_PORT = 9100;
-    public static final TimeZone TIMEZONE = TimeZone.getTimeZone("EST");
+    // 5 seconds as milliseconds
+    private static final long CONNECTION_RETRY_DELAY = 5000;
+    
+    private static final int MAX_CONNECT_ATTEMPTS = 3;
+
+    protected static final String MSG_END = "!ENDMSG!";
+    protected static final String MSG_NO_DATA = "!NO_DATA!";
+    
+    private static final String PARAMETER_PRODUCT = "-product";
+    private static final String PARAMETER_VERSION = "-version";
+
+    protected static final int DEFAULT_ADMIN_PORT = 9300;
+    protected static final int DEFAULT_HISTORICAL_PORT = 9100;
+    protected static final TimeZone TIMEZONE = TimeZone.getTimeZone("EST");
+    
+    private static final String PRODUCT_ID = "JAMES_NICOLL_1268";
 
     private static final Logger log = Logger.getLogger(IQFeedGateway.class);
 
+    private final Configuration configuration;
     private final DatabaseThread databaseThread;
-    private final IQ_32 iq32;
     private final InetAddress localhost;
     private boolean stop = false;
     private final String version;
+    
+    private Socket adminSocket;
+    private BufferedReader adminReader;
+    private BufferedWriter adminWriter;
     
     private Socket historicalSocket;
     private BufferedReader historicalReader;
     private BufferedWriter historicalWriter;
     
+    private Process iqConnect = null;
+    
     private final BlockingQueue<IQFeedWork> workQueue = new ArrayBlockingQueue<IQFeedWork>(100);
 
-    public          IQFeedGateway(final DatabaseThread setDatabaseThread,
-        final String setVersion)
+    public          IQFeedGateway(final Configuration setConfiguration,
+        final DatabaseThread setDatabaseThread, final String setVersion)
         throws IQFeedException {
+        this.configuration = setConfiguration;
         this.databaseThread = setDatabaseThread;
         this.version = setVersion;
         
@@ -61,7 +80,6 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
         }
         
         this.setName("IQFeed");
-        this.iq32 = new InternalIQ();
     }
     
     public void close() {
@@ -91,6 +109,21 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
         return this.historicalWriter;
     }
     
+    /**
+     * Handles a dataline coming from the admin data feed.
+     *
+     * @throws IQFeedException if the incoming data contained an error.
+     */
+    private void handleAdminInput(final String line)
+        throws IQFeedException {
+        if (line.indexOf("S,STATS") == 0) {
+            // XXX: Do something useful with this data.
+        } else {
+            log.warn("Unhandled admin input: "
+                + line);
+        }
+    }
+    
     public void requestHistoricalData(final HistoricalDataConsumer backfillHandler,
         final ContractDetails contractDetails, final Date startDate, final Date endDate,
         final HistoricBarSize barSize)
@@ -101,38 +134,175 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
     }
     
     public void run() {
-        this.iq32.RegisterClientApp("JAMES_NICOLL_1268", version, "0.11111111");
+        int connectionAttempts;
+    
+        for (connectionAttempts = 0; connectionAttempts < MAX_CONNECT_ATTEMPTS; connectionAttempts++) {
+            try {
+                this.adminSocket = new Socket(this.localhost, DEFAULT_ADMIN_PORT);
+            } catch(IOException e) {
+                this.adminSocket = null;
+            }
+            
+            if (null != this.adminSocket) {
+                break;
+            }
+            
+            try {
+                this.iqConnect = Runtime.getRuntime().exec(new String[] {
+                    this.configuration.getIQConnect(),
+                    PARAMETER_PRODUCT, PRODUCT_ID,
+                    PARAMETER_VERSION, this.version});
+            } catch(IOException e) {
+                log.error("IOException while running IQConnect application: "
+                    + e);
+                return;
+            } catch(SecurityException e) {
+                log.error("SecurityException while running IQConnect application: "
+                    + e);
+                return;
+            }
+            try {
+                Thread.currentThread().sleep(CONNECTION_RETRY_DELAY);
+            } catch(InterruptedException e) {
+                log.error("IQFeed gateway interrupted while attempting to connect to IQConnect.");
+                return;
+            }
+        }
+        
+        if (connectionAttempts >= MAX_CONNECT_ATTEMPTS) {
+            log.error("Could not connect to admin socket after "
+                + MAX_CONNECT_ATTEMPTS + " attempts, giving up.");
+            return;
+        }
         
         try {
-            this.historicalSocket = new Socket(this.localhost, HISTORICAL_DATA_PORT);
             try {
-                this.historicalReader = new BufferedReader(
-                    new InputStreamReader(this.historicalSocket.getInputStream())
+                this.adminReader = new BufferedReader(
+                    new InputStreamReader(this.adminSocket.getInputStream())
                 );
-                this.historicalWriter = new BufferedWriter(
-                    new OutputStreamWriter(this.historicalSocket.getOutputStream())
+                this.adminWriter = new BufferedWriter(
+                    new OutputStreamWriter(this.adminSocket.getOutputStream())
                 );
-            
-                while (!this.stop) {
-                    runInnerLoop();
+                
+                if (null == this.iqConnect) {
+                    this.adminWriter.write("S,REGISTER CLIENT APP,"
+                        + PRODUCT_ID + ","
+                        + this.version + "\r\n");
+                    this.adminWriter.flush();
+                    String response = this.adminReader.readLine();
+                    // XXX: Need a timeout here
+                    if (!response.equals("S,REGISTER CLIENT APP COMPLETED,")) {
+                        log.error("Unexpected response while trying to register client app: "
+                            + response);
+                        return;
+                    }
                 }
-        
-                this.historicalSocket.shutdownOutput();
-				this.historicalSocket.shutdownInput();
+            
+    
+                for (connectionAttempts = 0; connectionAttempts < MAX_CONNECT_ATTEMPTS; connectionAttempts++) {
+                    try {
+                        this.historicalSocket = new Socket(this.localhost, DEFAULT_HISTORICAL_PORT);
+                    } catch(IOException e) {
+                        this.historicalSocket = null;
+                    }
+                    
+                    if (null != this.historicalSocket) {
+                        break;
+                    }
+                    try {
+                        Thread.currentThread().sleep(CONNECTION_RETRY_DELAY);
+                    } catch(InterruptedException e) {
+                        log.error("IQFeed gateway interrupted while attempting to connect to IQConnect historical data service.");
+                        return;
+                    }
+                }
+                
+                if (connectionAttempts >= MAX_CONNECT_ATTEMPTS) {
+                    log.error("Could not connect to historical socket after "
+                        + MAX_CONNECT_ATTEMPTS + " attempts, giving up.");
+                    return;
+                }
+                
+                try {
+                    this.historicalReader = new BufferedReader(
+                        new InputStreamReader(this.historicalSocket.getInputStream())
+                    );
+                    this.historicalWriter = new BufferedWriter(
+                        new OutputStreamWriter(this.historicalSocket.getOutputStream())
+                    );
+                
+                    while (!this.stop) {
+                        runInnerLoop();
+                    }
+            
+                    this.historicalSocket.shutdownOutput();
+                    this.historicalSocket.shutdownInput();
+                } finally {
+                    this.historicalSocket.close();
+                }
+                
+                this.adminWriter.write("S,REMOVE CLIENT APP,"
+                    + PRODUCT_ID + ","
+                    + this.version + "\r\n");
+                this.adminWriter.flush();
+                // XXX: Need a timeout here
+                // XXX: Need to have a single input stream for admin stuff,
+                // to handle excess stats lines.
+                String response = this.adminReader.readLine();
+                if (!response.equals("S,REMOVE CLIENT APP COMPLETED,")) {
+                    log.warn("Unexpected response while trying to remove client app: "
+                        + response);
+                }
+                
+                this.adminSocket.shutdownOutput();
+                this.adminSocket.shutdownInput();
             } finally {
-				this.historicalSocket.close();
+                this.adminSocket.close();
             }
         } catch(IOException e) {
             // XXX: Attempt to reconnect?
-            log.debug("IOException while communicating with IQFeed:", e);
+            log.debug("IOException while communicating with IQFeed: ", e);
         }
-        this.iq32.RemoveClientApp();
     }
     
     private void runInnerLoop()
         throws IOException {
+        final char[] adminBuffer = new char[ADMIN_BUFFER_SIZE];
+        int adminBufferUsed = 0;
+        
         try {
-			final IQFeedWork work = this.workQueue.poll(60, TimeUnit.SECONDS);
+			final IQFeedWork work = this.workQueue.poll(1, TimeUnit.SECONDS);
+            int charRead = this.adminReader.read(adminBuffer, adminBufferUsed, ADMIN_BUFFER_SIZE - adminBufferUsed);
+            
+            if (charRead > 0) {
+                int adminBufferConsumed = 0;
+                final int oldAdminBufferUsed = adminBufferUsed;
+                
+                adminBufferUsed += charRead;
+                if (adminBufferUsed >= ADMIN_BUFFER_SIZE) {
+                    log.error("IQFeed admin data feed has overflowed its buffer. Buffer contents: "
+                        + adminBuffer);
+                    return;
+                }
+                
+                for (int charIdx = oldAdminBufferUsed; charIdx < adminBufferUsed; charIdx++) {
+                    if (adminBuffer[charIdx] == '\n') {
+                        final String line = new String(adminBuffer, adminBufferConsumed, charIdx);
+                        adminBufferConsumed = charIdx + 1;
+                        handleAdminInput(line);
+                    }
+                }
+                
+                if (adminBufferConsumed >= adminBufferUsed) {
+                    adminBufferUsed = 0;
+                } else {
+                    adminBufferUsed = adminBufferUsed - adminBufferConsumed;
+                    
+                    for (int charIdx = 0; charIdx < adminBufferUsed; charIdx++) {
+                        adminBuffer[charIdx] = adminBuffer[adminBufferConsumed + charIdx];
+                    }
+                }
+            }
             
             if (null == work) {
                 return;
@@ -145,19 +315,6 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
                 + e);
             // FIXME: Handle
             return;
-        }
-    }
-    
-    private class InternalIQ extends IQ_32 {
-        private     InternalIQ() {
-            super();
-        }
-        
-        public void IQConnectStatus(int a, int b) {
-            log.info("IQConnectStatus("
-                + a + ", "
-                + b + ");");
-            // XXX: Do stuff here
         }
     }
 }

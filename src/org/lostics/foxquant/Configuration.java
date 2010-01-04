@@ -103,7 +103,7 @@ public class Configuration extends Object {
      * the full path if required, or something more complex (for example to run
      * IQConnect via WINE).
      */
-    public String getIQConnectName() {
+    public String getIQConnect() {
         return null == this.iqConnect
             ? DEFAULT_IQCONNECT
             : this.iqConnect;

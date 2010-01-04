@@ -220,7 +220,7 @@ public class ConnectionManager extends Object implements HistoricalDataSource {
         this.databaseThread = new DatabaseThread(configuration);
         this.databaseThread.start();
 
-        this.iqFeedGateway = new IQFeedGateway(this.databaseThread, FoxQuant.VERSION);
+        this.iqFeedGateway = new IQFeedGateway(configuration, this.databaseThread, FoxQuant.VERSION);
         this.iqFeedGateway.start();
     }
 
