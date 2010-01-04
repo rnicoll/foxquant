@@ -107,7 +107,7 @@ public class CatchingDaggers implements Strategy {
      * there is too high a chance of getting stopped out early.
      */
     // XXX: This value should be different for inverted trades...
-    public static final double MIN_PROFIT_MULTIPLIER = 0.00060;
+    public static final double MIN_PROFIT_MULTIPLIER = 0.00065;
     
     /**
      * Ratio of price as maximum expected profit from a trade. Beyond this
@@ -362,19 +362,20 @@ public class CatchingDaggers implements Strategy {
         // the SMA down to the entry price.
         this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
         
-        this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
-        this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
-        this.actualExitLimitPrice = this.projectedExitLimitPrice;
-        this.actualExitStopPrice = this.projectedExitStopPrice;
-        
         if (!isInverted) {
+            this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
+            this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
             this.entryOrderPool.setLongLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
+            this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
+            this.projectedExitStopPrice = this.entryPrice + getMinimumProfit();
             // XXX: Entry price limit decrement should be based on average spread
-            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - 2, this.entryPrice,
-                this.projectedExitStopPrice, this.projectedExitLimitPrice);
+            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - 3, this.entryPrice,
+                this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
+        this.actualExitLimitPrice = this.projectedExitLimitPrice;
+        this.actualExitStopPrice = this.projectedExitStopPrice;
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
@@ -433,19 +434,20 @@ public class CatchingDaggers implements Strategy {
         // the entry price down to the SMA.
         this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
         
-        this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
-        this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
-        this.actualExitLimitPrice = this.projectedExitLimitPrice;
-        this.actualExitStopPrice = this.projectedExitStopPrice;
-
         if (!isInverted) {
+            this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
+            this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
             this.entryOrderPool.setShortLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
+            this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
+            this.projectedExitStopPrice = this.entryPrice - getMinimumProfit();
             // XXX: Entry price limit increment should be based on average spread
             this.entryOrderPool.setLongStopLimitOrder(this.entryPrice + 3, this.entryPrice,
-                this.projectedExitStopPrice, this.projectedExitLimitPrice);
+                this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
+        this.actualExitLimitPrice = this.projectedExitLimitPrice;
+        this.actualExitStopPrice = this.projectedExitStopPrice;
         
         // Check the spread on the Bollinger Band is wide enough to make this
         // a viable trade.
