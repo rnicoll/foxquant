@@ -21,8 +21,11 @@ import org.lostics.foxquant.iqfeed.IQFeedException;
 import org.lostics.foxquant.database.DatabaseUnavailableException;
 
 public class Configuration extends Object {
+    public static final String DEFAULT_IQCONNECT = "IQConnect.exe";
     public static final int    DEFAULT_PORT = 7496;
 
+    public static final String PROPERTY_IQFEED_IQCONNECT = "iqConnect";
+    
     public static final String PROPERTY_JDBC_DRIVER = "jdbcDriver";
     public static final String PROPERTY_JDBC_PASSWORD = "jdbcPassword";
     public static final String PROPERTY_JDBC_URL = "jdbcURL";
@@ -49,6 +52,8 @@ public class Configuration extends Object {
 
     private boolean firstDBConnection = true;
 
+    public  String iqConnect = null;
+    
     public  String jdbcDriver = "org.hsqldb.jdbcDriver";
     public  String jdbcPassword;
     public  String jdbcURL = "jdbc:hsqldb:hsql://localhost/forex";
@@ -90,6 +95,18 @@ public class Configuration extends Object {
         }
 
         return connection;
+    }
+    
+    /**
+     * Returns the name of the IQConnect.exe program for starting IQFeed.
+     * Defaults, unsurprisingly, to "IQConnect.exe". Alternatives might be 
+     * the full path if required, or something more complex (for example to run
+     * IQConnect via WINE).
+     */
+    public String getIQConnectName() {
+        return null == this.iqConnect
+            ? DEFAULT_IQCONNECT
+            : this.iqConnect;
     }
 
     /**
@@ -168,7 +185,9 @@ public class Configuration extends Object {
             final String propertyKey = (String)propertyNames.nextElement();
             final String propertyValue = properties.getProperty(propertyKey);
 
-            if (propertyKey.equals(PROPERTY_JDBC_DRIVER)) {
+            if (propertyKey.equals(PROPERTY_IQFEED_IQCONNECT)) {
+                this.iqConnect = propertyValue;
+            } else if (propertyKey.equals(PROPERTY_JDBC_DRIVER)) {
                 this.jdbcDriver = propertyValue;
             } else if (propertyKey.equals(PROPERTY_JDBC_PASSWORD)) {
                 this.jdbcPassword = propertyValue;
