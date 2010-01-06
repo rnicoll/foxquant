@@ -287,7 +287,7 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
                 
                 for (int charIdx = oldAdminBufferUsed; charIdx < adminBufferUsed; charIdx++) {
                     if (adminBuffer[charIdx] == '\n') {
-                        final String line = new String(adminBuffer, adminBufferConsumed, charIdx);
+                        final String line = new String(adminBuffer, adminBufferConsumed, charIdx - adminBufferConsumed);
                         adminBufferConsumed = charIdx + 1;
                         handleAdminInput(line);
                     }

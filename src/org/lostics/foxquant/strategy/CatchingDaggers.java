@@ -107,7 +107,7 @@ public class CatchingDaggers implements Strategy {
      * there is too high a chance of getting stopped out early.
      */
     // XXX: This value should be different for inverted trades...
-    public static final double MIN_PROFIT_MULTIPLIER = 0.00065;
+    public static final double MIN_PROFIT_MULTIPLIER = 0.0006;
     
     /**
      * Ratio of price as maximum expected profit from a trade. Beyond this
@@ -371,7 +371,7 @@ public class CatchingDaggers implements Strategy {
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + getMinimumProfit();
             // XXX: Entry price limit decrement should be based on average spread
-            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - 3, this.entryPrice,
+            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice, this.entryPrice + 2,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
@@ -443,7 +443,7 @@ public class CatchingDaggers implements Strategy {
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - getMinimumProfit();
             // XXX: Entry price limit increment should be based on average spread
-            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice + 3, this.entryPrice,
+            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice, this.entryPrice - 2,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
