@@ -107,14 +107,14 @@ public class CatchingDaggers implements Strategy {
      * there is too high a chance of getting stopped out early.
      */
     // XXX: This value should be different for inverted trades...
-    public static final double MIN_PROFIT_MULTIPLIER = 0.0006;
+    public static final double MIN_PROFIT_MULTIPLIER = 0.0005;
     
     /**
      * Ratio of price as maximum expected profit from a trade. Beyond this
      * value it's assumed the market is too far out to be predictable.
      */
     // XXX: This value should be different for inverted trades...
-    public static final double MAX_PROFIT_MULTIPLIER = 0.004;
+    public static final double MAX_PROFIT_MULTIPLIER = 0.003;
     
     /**
      * Ratio of the distance between upper/lower band and the SMA, to expect
