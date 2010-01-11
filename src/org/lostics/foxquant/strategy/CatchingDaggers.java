@@ -790,10 +790,10 @@ public class CatchingDaggers implements Strategy {
                 statement.setDouble(5, this.getEntryShort());
                 statement.setDouble(6, this.getExitLong());
                 statement.setDouble(7, this.getExitShort());
-                statement.setDouble(8, this.askBB.getSMA(1));
-                statement.setDouble(9, this.askBB.getStandardDeviation(1));
-                statement.setDouble(10, this.bidBB.getSMA(1));
-                statement.setDouble(11, this.bidBB.getStandardDeviation(1));
+                statement.setDouble(8, this.askBB.getSMA(0));
+                statement.setDouble(9, this.askBB.getStandardDeviation(0));
+                statement.setDouble(10, this.bidBB.getSMA(0));
+                statement.setDouble(11, this.bidBB.getStandardDeviation(0));
                 statement.executeUpdate();
             } finally {
                 statement.close();
