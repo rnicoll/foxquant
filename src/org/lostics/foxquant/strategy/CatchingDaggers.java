@@ -1,4 +1,3 @@
-// $Id: CatchingDaggers.java 707 2009-11-12 01:30:30Z jrn $
 package org.lostics.foxquant.strategy;
 
 import java.sql.Connection;
@@ -368,7 +367,7 @@ public class CatchingDaggers implements Strategy {
             this.entryOrderPool.setLongLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
-            this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
+            this.entryPrice = projectedEntryPrice;
             this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
             
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
@@ -444,8 +443,7 @@ public class CatchingDaggers implements Strategy {
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
             // Go long
-            // this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
-            this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
+            this.entryPrice = projectedEntryPrice;
             
             // We're closer to going short, so we want to get the distance from
             // the entry price down to the SMA.
