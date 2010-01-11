@@ -356,18 +356,21 @@ public class CatchingDaggers implements Strategy {
         // Go long
         
         // this.entryPrice = Math.min((this.mostRecentAsk - askOffset), projectedEntryPrice);
-        this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
-        
-        // We're closer to going long, so we want to get the distance from
-        // the SMA down to the entry price.
-        this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
-        
         if (!isInverted) {
+            this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
+            
+            // We're closer to going long, so we want to get the distance from
+            // the SMA down to the entry price.
+            this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
+        
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
             this.entryOrderPool.setLongLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
+            this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
+            this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
+            
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + getMinimumProfit();
             // XXX: Entry price limit decrement should be based on average spread
@@ -426,20 +429,28 @@ public class CatchingDaggers implements Strategy {
         final int projectedEntryPrice = this.getEntryShort();
         final int bidOffset = this.bidRecentBuffer.getNow() - this.bidRecentBuffer.getMeanExcludingNow();
                 
-        // Go short
-        // this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
-        this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
-        
-        // We're closer to going short, so we want to get the distance from
-        // the entry price down to the SMA.
-        this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
-        
         if (!isInverted) {
+            // Go short
+            // this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
+            this.entryPrice = Math.max(this.mostRecentBid, projectedEntryPrice);
+            
+            // We're closer to going short, so we want to get the distance from
+            // the entry price down to the SMA.
+            this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+        
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
             this.entryOrderPool.setShortLimitOrder(this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         } else {
+            // Go long
+            // this.entryPrice = Math.max((this.mostRecentBid + bidOffset), projectedEntryPrice);
+            this.entryPrice = Math.min(this.mostRecentAsk, projectedEntryPrice);
+            
+            // We're closer to going short, so we want to get the distance from
+            // the entry price down to the SMA.
+            this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+            
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - getMinimumProfit();
             // XXX: Entry price limit increment should be based on average spread
