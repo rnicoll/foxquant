@@ -374,7 +374,7 @@ public class CatchingDaggers implements Strategy {
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + getMinimumProfit();
             // XXX: Entry price limit decrement should be based on average spread
-            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice, this.entryPrice + 2,
+            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - 2, this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
@@ -454,7 +454,7 @@ public class CatchingDaggers implements Strategy {
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - getMinimumProfit();
             // XXX: Entry price limit increment should be based on average spread
-            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice, this.entryPrice - 2,
+            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice + 2, this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
