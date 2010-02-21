@@ -68,7 +68,7 @@ public class CatchingDaggers implements Strategy {
      * Used to ensure it doesn't re-enter immediately after a stop-loss is
      * hit (although should probably wait until the market hits SMA really).
      */
-    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 15;
+    public static final long COOLDOWN_PERIOD = ONE_MINUTE * 30;
     
     /**
      * How long, after the strategy started, before it will start trading.
@@ -106,14 +106,14 @@ public class CatchingDaggers implements Strategy {
      * there is too high a chance of getting stopped out early.
      */
     // XXX: This value should be different for inverted trades...
-    public static final double MIN_PROFIT_MULTIPLIER = 0.0005;
+    public static final double MIN_PROFIT_MULTIPLIER = 0.0004;
     
     /**
      * Ratio of price as maximum expected profit from a trade. Beyond this
      * value it's assumed the market is too far out to be predictable.
      */
     // XXX: This value should be different for inverted trades...
-    public static final double MAX_PROFIT_MULTIPLIER = 0.003;
+    public static final double MAX_PROFIT_MULTIPLIER = 0.0025;
     
     /**
      * Ratio of the distance between upper/lower band and the SMA, to expect
