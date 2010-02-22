@@ -83,7 +83,7 @@ public class TWSContractManager extends AbstractContractManager {
     /** Entry/exit orders are valid for five minutes. */
     public static final int ORDER_TTL = 300000;
     
-    private static final int DEFAULT_QUANTITY = 100000;
+    private static final int DEFAULT_QUANTITY = 150000;
 
     private static final int INTERVAL_SUBMIT_CHILD_ORDERS = 300;
     private static final int INTERVAL_TRANSMIT_PARENT_ORDER = INTERVAL_SUBMIT_CHILD_ORDERS;

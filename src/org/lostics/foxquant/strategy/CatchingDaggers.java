@@ -361,6 +361,12 @@ public class CatchingDaggers implements Strategy {
             // We're closer to going long, so we want to get the distance from
             // the SMA down to the entry price.
             this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
+            
+            if (this.targetProfit < 1) {
+                // Too low to even generate the trade to show.
+                this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
+                return null;
+            }
         
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - this.targetProfit;
@@ -369,6 +375,12 @@ public class CatchingDaggers implements Strategy {
         } else {
             this.entryPrice = projectedEntryPrice;
             this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
+            
+            if (this.targetProfit < 2) {
+                // Too low to even generate the trade to show.
+                this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
+                return null;
+            }
             
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + getMinimumProfit();
@@ -436,6 +448,12 @@ public class CatchingDaggers implements Strategy {
             // We're closer to going short, so we want to get the distance from
             // the entry price down to the SMA.
             this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+            
+            if (this.targetProfit < 2) {
+                // Too low to even generate the trade to show.
+                this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
+                return null;
+            }
         
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + this.targetProfit;
@@ -448,6 +466,12 @@ public class CatchingDaggers implements Strategy {
             // We're closer to going short, so we want to get the distance from
             // the entry price down to the SMA.
             this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
+            
+            if (this.targetProfit < 2) {
+                // Too low to even generate the trade to show.
+                this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
+                return null;
+            }
             
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - getMinimumProfit();
