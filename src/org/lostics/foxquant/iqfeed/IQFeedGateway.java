@@ -27,7 +27,7 @@ import org.lostics.foxquant.Configuration;
 
 public class IQFeedGateway extends Thread implements HistoricalDataSource {
     // Size, in characters, of the admin socket read buffer.
-    private static final int ADMIN_BUFFER_SIZE = 512;
+    private static final int ADMIN_BUFFER_SIZE = 2048;
 
     // 5 seconds as milliseconds
     private static final long CONNECTION_RETRY_DELAY = 5000;
@@ -271,7 +271,7 @@ public class IQFeedGateway extends Thread implements HistoricalDataSource {
         int adminBufferUsed = 0;
         
         try {
-			final IQFeedWork work = this.workQueue.poll(1, TimeUnit.SECONDS);
+            final IQFeedWork work = this.workQueue.poll(1, TimeUnit.SECONDS);
             int charRead = this.adminReader.read(adminBuffer, adminBufferUsed, ADMIN_BUFFER_SIZE - adminBufferUsed);
             
             if (charRead > 0) {
