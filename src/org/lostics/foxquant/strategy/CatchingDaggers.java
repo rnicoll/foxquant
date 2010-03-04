@@ -86,14 +86,14 @@ public class CatchingDaggers implements Strategy {
      * Ratio of price as maximum distance from the entry point before
      * trades are transmitted from TWS to the market.
      */
-    public static final double TRANSMIT_DISTANCE_MULTIPLIER = 0.00030;
+    public static final double TRANSMIT_DISTANCE_MULTIPLIER = 0.00035;
     
     /**
      * Ratio of price as maximum distance from the entry point before
      * trades are entered into TWS. Outside this range orders are
      * cancelled.
      */
-    public static final double ORDER_DISTANCE_MULTIPLIER = 0.00050;
+    public static final double ORDER_DISTANCE_MULTIPLIER = 0.00055;
     
     /**
      * Ratio of price as maximum distance from the entry point before
@@ -126,6 +126,9 @@ public class CatchingDaggers implements Strategy {
 
     /** Don't open any more positions after 45 minutes before market close. */
     private static final int MARKET_CLOSE_SOFT_STOP = 45 * 60 * 1000;
+    
+    /** Number of pips improvement to look for, from the stop price to the limit price. */
+    private static final int STOP_LIMIT_DISTANCE = 3;
     
     // -----------------------------------------------------------------------
     // Finished with the constants.
@@ -376,7 +379,7 @@ public class CatchingDaggers implements Strategy {
             this.entryPrice = projectedEntryPrice;
             this.targetProfit = (int)Math.ceil((this.getExitLong() - this.entryPrice) * PROFIT_TARGET_MULTIPLIER);
             
-            if (this.targetProfit < 2) {
+            if (this.targetProfit < STOP_LIMIT_DISTANCE) {
                 // Too low to even generate the trade to show.
                 this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
                 return null;
@@ -385,7 +388,7 @@ public class CatchingDaggers implements Strategy {
             this.projectedExitLimitPrice = this.entryPrice - this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice + getMinimumProfit();
             // XXX: Entry price limit decrement should be based on average spread
-            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - 2, this.entryPrice,
+            this.entryOrderPool.setShortStopLimitOrder(this.entryPrice - STOP_LIMIT_DISTANCE, this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
@@ -449,7 +452,7 @@ public class CatchingDaggers implements Strategy {
             // the entry price down to the SMA.
             this.targetProfit = (int)Math.ceil((this.entryPrice - this.getExitShort()) * PROFIT_TARGET_MULTIPLIER);
             
-            if (this.targetProfit < 2) {
+            if (this.targetProfit < STOP_LIMIT_DISTANCE) {
                 // Too low to even generate the trade to show.
                 this.strategyState = State.PREDICTED_PROFIT_TOO_LOW;
                 return null;
@@ -476,7 +479,7 @@ public class CatchingDaggers implements Strategy {
             this.projectedExitLimitPrice = this.entryPrice + this.targetProfit;
             this.projectedExitStopPrice = this.entryPrice - getMinimumProfit();
             // XXX: Entry price limit increment should be based on average spread
-            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice + 2, this.entryPrice,
+            this.entryOrderPool.setLongStopLimitOrder(this.entryPrice + STOP_LIMIT_DISTANCE, this.entryPrice,
                 this.projectedExitLimitPrice, this.projectedExitStopPrice);
         }
         this.actualExitLimitPrice = this.projectedExitLimitPrice;
@@ -606,7 +609,7 @@ public class CatchingDaggers implements Strategy {
         fastProfit = Math.max(fastProfit, getMinimumProfit()); */
         
         this.exitOrdersPool.setLong(this.entryPrice + this.targetProfit,
-            this.entryPrice - this.targetProfit);
+            this.entryPrice - (int)Math.ceil(this.targetProfit / 2.0));
         
         return this.exitOrdersPool;
     }
@@ -629,7 +632,7 @@ public class CatchingDaggers implements Strategy {
         
         fastProfit = Math.max(fastProfit, getMinimumProfit()); */
         this.exitOrdersPool.setShort(this.entryPrice - this.targetProfit,
-            this.entryPrice + this.targetProfit);
+            this.entryPrice + (int)Math.ceil(this.targetProfit / 2.0));
             
         return this.exitOrdersPool;
     }
