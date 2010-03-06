@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   <property name="twsapi.jar"
            value="${jar.dir}/twsapi-9.62.jar" />
   <property name="twitter4j.jar"
-           value="${jar.dir}/twitter4j-2.0.10.jar" />
+           value="${jar.dir}/twitter4j-core-2.1.0.jar" />
   <property name="log4j.jar"
            value="${jar.dir}/log4j-1.2.15.jar" />
 

@@ -10,8 +10,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.Twitter;
 
 /**
  * Twitter gateway for sending status updates via Twitter.
@@ -39,7 +40,7 @@ public class TwitterGateway extends Thread {
         super();
         this.userName = setUsername;
         this.password = setPassword;
-        this.twitter = new Twitter(this.userName, this.password);
+        this.twitter = new TwitterFactory().getInstance(this.userName, this.password);
         
         this.setName("Twitter");
     }
