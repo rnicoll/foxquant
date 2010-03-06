@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
            value="${basedir}/src" />
 
   <property name="mysqldb.jar"
-           value="${jar.dir}/mysql-connector-java-5.1.10-bin.jar" />
+           value="${jar.dir}/mysql-connector-java-5.1.12-bin.jar" />
 
   <property name="iqfeed.jar"
            value="${jar.dir}/iqfeed-4.6.1.0.jar" />
