@@ -40,9 +40,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   <property name="poi.jar"
            value="${jar.dir}/poi-3.5-FINAL-20090928.jar" />
   <property name="substance-lite.jar"
-           value="${jar.dir}/substance-lite-5.3.jar" />
+           value="${jar.dir}/substance-lite-6.0.jar" />
   <property name="twsapi.jar"
            value="${jar.dir}/twsapi-9.62.jar" />
+  <property name="trident.jar"
+           value="${jar.dir}/trident-1.2.jar" />
   <property name="twitter4j.jar"
            value="${jar.dir}/twitter4j-core-2.1.0.jar" />
   <property name="log4j.jar"
@@ -57,6 +59,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     <pathelement location="${junit.jar}" />
     <pathelement location="${poi.jar}" />
     <pathelement location="${substance-lite.jar}" />
+    <pathelement location="${trident.jar}" />
     <pathelement location="${twsapi.jar}" />
     <pathelement location="${twitter4j.jar}" />
     <pathelement location="${log4j.jar}" />
@@ -72,6 +75,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     <pathelement location="${mysqldb.jar}" />
     <pathelement location="${poi.jar}" />
     <pathelement location="${substance-lite.jar}" />
+    <pathelement location="${trident.jar}" />
     <pathelement location="${twsapi.jar}" />
     <pathelement location="${twitter4j.jar}" />
     <pathelement location="${build.dir}" />
