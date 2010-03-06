@@ -17,7 +17,7 @@ import javax.swing.UIManager;
 
 import org.apache.log4j.Logger;
 
-import org.pushingpixels.substance.api.skin.SubstanceRavenLookAndFeel;
+import org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel;
 
 import org.lostics.foxquant.database.DatabaseUnavailableException;
 import org.lostics.foxquant.iqfeed.IQFeedException;
@@ -63,9 +63,9 @@ public class FoxQuant extends Object {
             javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
                     try {
-                        UIManager.setLookAndFeel(new SubstanceRavenLookAndFeel());
+                        UIManager.setLookAndFeel(new SubstanceGraphiteGlassLookAndFeel());
                     } catch(Exception e) {
-                        log.error("Substance RavenGraphite L&F failed to initialise.", e);
+                        log.error("Substance GraphiteGlassGraphite L&F failed to initialise.", e);
                     }
                 
                     try {
