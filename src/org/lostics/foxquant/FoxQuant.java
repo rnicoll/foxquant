@@ -17,7 +17,7 @@ import javax.swing.UIManager;
 
 import org.apache.log4j.Logger;
 
-import org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel;
+import org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel;
 
 import org.lostics.foxquant.database.DatabaseUnavailableException;
 import org.lostics.foxquant.iqfeed.IQFeedException;
@@ -63,9 +63,9 @@ public class FoxQuant extends Object {
             javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
                     try {
-                        UIManager.setLookAndFeel(new SubstanceGraphiteGlassLookAndFeel());
+                        UIManager.setLookAndFeel(new SubstanceBusinessBlackSteelLookAndFeel());
                     } catch(Exception e) {
-                        log.error("Substance GraphiteGlassGraphite L&F failed to initialise.", e);
+                        log.error("Substance Business Black Steel L&F failed to initialise.", e);
                     }
                 
                     try {
