@@ -1,8 +1,8 @@
-// $Id$
 package org.lostics.foxquant.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.Container;
@@ -24,6 +24,9 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -76,6 +79,36 @@ public class MainFrame extends JFrame implements WindowListener {
         this.contractsPanel = new ContractsPanel(setConfiguration, this);
     }
 
+    private JMenuBar createMenuBar() {
+        final JMenuBar menuBar = new JMenuBar();
+        final JMenu fileMenu = new JMenu("File");
+        
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        menuBar.add(fileMenu);
+        
+        final JMenuItem connectMenuItem = new JMenuItem("Connect", KeyEvent.VK_C);
+        connectMenuItem.getAccessibleContext().setAccessibleDescription(
+            "Connect to Trader Workstation");
+                
+        final JMenuItem disconnectMenuItem = new JMenuItem("Disconnect", KeyEvent.VK_D);
+        disconnectMenuItem.getAccessibleContext().setAccessibleDescription(
+            "Disconnect from Trader Workstation");
+        disconnectMenuItem.setEnabled(false);
+        
+        final JMenuItem quitMenuItem = new JMenuItem("Quit", KeyEvent.VK_Q);
+        disconnectMenuItem.getAccessibleContext().setAccessibleDescription(
+            "Quit the FoxQuant application");
+                
+        fileMenu.add(connectMenuItem);
+        fileMenu.add(disconnectMenuItem);
+        
+        fileMenu.addSeparator();
+        
+        fileMenu.add(quitMenuItem);
+
+        return menuBar;
+    }
+
     public static void createAndShowUI(final Configuration setConfiguration)
         throws DatabaseUnavailableException, IQFeedException, SQLException {
         // XXX: Should handle runtime exceptions by exiting here.
@@ -116,7 +149,7 @@ public class MainFrame extends JFrame implements WindowListener {
 
         this.connectionManager.addErrorListener(this.new ErrorHandler());
 
-        //pane.add(this.tabbedPane);
+        this.setJMenuBar(createMenuBar());
 
         //Display the window.
         this.pack();
