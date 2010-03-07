@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   <property name="junit.jar"
            value="${jar.dir}/junit-4.7.jar" />
   <property name="poi.jar"
-           value="${jar.dir}/poi-3.5-FINAL-20090928.jar" />
+           value="${jar.dir}/poi-3.6-20091214.jar" />
   <property name="substance-lite.jar"
            value="${jar.dir}/substance-lite-6.0.jar" />
   <property name="twsapi.jar"
