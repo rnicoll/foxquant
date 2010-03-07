@@ -5,16 +5,15 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 
-import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.pdf.DefaultFontMapper;
-import com.lowagie.text.Cell;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.Table;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.DefaultFontMapper;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
 
 import java.util.List;
 import java.util.Calendar;
@@ -26,7 +25,7 @@ import org.lostics.foxquant.model.ContractManager;
 public class AnalysisPage extends AbstractPage {
     private Font DEFAULT_FONT = FontFactory.getFont(FontFactory.TIMES, 12);
 
-    private Table generateTable(final List<Roundturn> roundturns, 
+    private PdfPTable generateTable(final List<Roundturn> roundturns, 
         final DefaultFontMapper mapper) throws DocumentException {
         final double[] equity = new double[roundturns.size() + 1];
         int equityIdx = 1;
@@ -42,7 +41,7 @@ public class AnalysisPage extends AbstractPage {
         double totalChange = 0;
         double totalProfits = 0;
         double totalLosses = 0;
-        final Table table;
+        final PdfPTable table;
 
         equity[0] = 0.0;
 
@@ -80,9 +79,9 @@ public class AnalysisPage extends AbstractPage {
             equityIdx++;
         }
 
-        table = new Table(2);
-        table.setPadding(2);
-        table.endHeaders();
+        table = new PdfPTable(2);
+        // table.setPadding(2);
+        table.setHeaderRows(0);
 
         table.addCell(new Phrase("Total p/l", DEFAULT_FONT));
         table.addCell(new Phrase(profitFormat.format(totalChange), DEFAULT_FONT));

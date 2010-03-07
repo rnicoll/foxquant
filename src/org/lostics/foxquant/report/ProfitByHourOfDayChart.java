@@ -14,11 +14,11 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.pdf.DefaultFontMapper;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.DefaultFontMapper;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Paragraph;
 
 import java.util.List;
 import java.util.Calendar;

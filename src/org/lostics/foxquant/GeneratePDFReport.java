@@ -9,8 +9,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.Document;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.Document;
 
 import org.lostics.foxquant.database.DatabaseUnavailableException;
 import org.lostics.foxquant.ib.ConnectionManager;

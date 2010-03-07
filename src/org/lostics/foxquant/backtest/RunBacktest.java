@@ -19,9 +19,9 @@ import com.ib.client.ContractDetails;
 import com.ib.client.Contract;
 import com.ib.client.Order;
 
-import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
 
 import org.apache.log4j.Logger;
 
