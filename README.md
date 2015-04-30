@@ -1,5 +1,11 @@
+= Fox Quant =
+
 This is intended as example code of a way of implementing a strategy runner against
-Interactive Broker's TWS API.
+Interactive Broker's TWS API. This is an old experiment, and is not maintaned code,
+nor is it intended as working application. It is ONLY intended to provide some ideas
+on how this automated trading can be implemented.
+
+== Directory Structure ==
 
 Right, that out of the way... the directory structure looks like:
 
@@ -8,21 +14,9 @@ PROBLEMS - Internal notes on problems that need resolving.
 README - This file
 build.xml - is the build file for ant ( http://ant.apache.org/ ).
 etc/ - contains useful files that go with FoxQuant, but are not libraries or source code.
-lib/ contains libraries that FoxQuant uses. The details of those libraries are covered
-later.
 src/ contains the source code to FoxQuant.
 
-In the libraries directory are the jar files for:
-
-iText - http://www.lowagie.com/iText/ - used for PDF report generation.
-JCommon - http://www.jfree.org/jcommon/index.php - used by JFreeChart.
-JFreeChart - http://www.jfree.org/jfreechart/ - used to generate graphs for the PDF report.
-JUnit - http://www.junit.org/ - used for automated unit tests of FoxQuant.
-Log4J - http://logging.apache.org/log4j/ - used for logging.
-MySQL Connector - http://www.mysql.com/products/connector/j/ - provides a connection to the MySQL database.
-POI - http://poi.apache.org/ - used to generate Excel reports.
-Twitter4J - http://yusuke.homeip.net/twitter4j/en/ - used to tracking changes using Twitter
-
+== Code ==
 
 The two files probably most interesting to look at are:
   src/org/lostics/foxquant/ib/ConnectionManager.java
